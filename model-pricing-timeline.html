@@ -414,7 +414,7 @@
 
     .tier-layout {
       display: grid;
-      grid-template-columns: minmax(0, 1fr) 330px;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 330px;
       gap: 14px;
       align-items: stretch;
     }
@@ -427,8 +427,15 @@
       overflow: hidden;
     }
 
-    #tierChart {
+    .tier-chart {
       height: 360px;
+    }
+
+    .tier-chart-title {
+      color: #344054;
+      font-size: 12px;
+      font-weight: 700;
+      margin: 0 0 6px;
     }
 
     .tier-line {
@@ -639,7 +646,7 @@
       .sidebar { min-height: auto; }
       .model-list { max-height: 360px; }
       svg { height: 520px; }
-      #tierChart { height: 420px; }
+      .tier-chart { height: 420px; }
 
       table {
         display: block;
@@ -702,22 +709,21 @@
       </section>
     </main>
 
-    <section class="tier-panel" aria-label="同档位价格复盘">
+    <section class="tier-panel" aria-label="旗舰模型价格复盘">
       <div class="tier-head">
         <div>
-          <h2 class="panel-title" id="tierTitle">同档位价格复盘</h2>
-          <p id="tierNote">按同一商业档位横向比较跨代模型，方便看旗舰、主力、轻量模型的价格中枢变化；价格口径跟主图一致。</p>
-        </div>
-        <div class="group" id="tierControls" data-control="tier">
-          <button class="active" data-value="flagship">旗舰/高端</button>
-          <button data-value="workhorse">主力通用</button>
-          <button data-value="budget">轻量低价</button>
-          <button data-value="premium">高价/Pro</button>
+          <h2 class="panel-title" id="tierTitle">旗舰模型价格复盘</h2>
+          <p id="tierNote">只看每家主力旗舰 / 高端通用 API 模型：OpenAI 从 GPT-4 到 GPT-5.5，Claude 从 Claude 2 / Opus 到 Fable。这里不混入 mini、nano、Haiku、Pro、preview、Fast mode 或长上下文加价。</p>
         </div>
       </div>
       <div class="tier-layout">
         <div class="tier-chart-wrap">
-          <svg id="tierChart" role="img" aria-label="同档位模型价格复盘图"></svg>
+          <div class="tier-chart-title">旗舰输入价</div>
+          <svg id="flagshipInputChart" class="tier-chart" role="img" aria-label="旗舰模型输入价复盘图"></svg>
+        </div>
+        <div class="tier-chart-wrap">
+          <div class="tier-chart-title">旗舰输出价</div>
+          <svg id="flagshipOutputChart" class="tier-chart" role="img" aria-label="旗舰模型输出价复盘图"></svg>
         </div>
         <div class="tier-insight" id="tierInsight"></div>
       </div>
@@ -1342,6 +1348,7 @@
     const fmtDate = (d) => d.replaceAll("-", ".");
     const money = (v) => "$" + (v >= 10 ? v.toFixed(0) : v >= 1 ? v.toFixed(2).replace(/\.00$/, "") : v.toFixed(2)) + "/M";
     const priceOf = (e) => state.metric === "input" ? e.input : state.metric === "output" ? e.output : e.input + e.output;
+    const priceForMetric = (e, metric) => metric === "input" ? e.input : metric === "output" ? e.output : e.input + e.output;
     const metricName = () => state.metric === "input" ? "输入价" : state.metric === "output" ? "输出价" : "输入+输出价";
     const modelColor = (m) => colors[m.family] || (m.provider === "OpenAI" ? "var(--openai)" : "var(--claude)");
     let frontierPointCache = [];
@@ -1595,6 +1602,54 @@
         })
         .filter(track => track.points.length);
       return { def, tracks };
+    }
+
+    function flagshipTracks(options = {}) {
+      const applyProvider = options.applyProvider !== false;
+      const applySearch = options.applySearch !== false;
+      const q = applySearch ? state.search.trim().toLowerCase() : "";
+      const tracks = [
+        {
+          provider: "OpenAI",
+          name: "OpenAI 旗舰",
+          color: "#2563eb",
+          points: [
+            pointFromModel("gpt-4", 0, "GPT-4", "早期旗舰起点"),
+            pointFromModel("gpt-4-turbo", 0, "GPT-4 Turbo", "128K 旗舰降价"),
+            pointFromModel("gpt-4o", 0, "GPT-4o", "多模态主力旗舰半价"),
+            pointFromModel("gpt-4o", 1, "4o 08-06", "同代 snapshot 再降价"),
+            pointFromModel("gpt-4-1", 0, "GPT-4.1", "GPT-4 时代低点"),
+            pointFromModel("gpt-5", 0, "GPT-5", "新一代主模型"),
+            pointFromModel("gpt-5-2", 0, "GPT-5.2", "GPT-5 系列上移", false),
+            pointFromModel("gpt-5-4", 0, "GPT-5.4", "更高能力档位", false),
+            pointFromModel("gpt-5-5", 0, "GPT-5.5", "当前主旗舰")
+          ]
+        },
+        {
+          provider: "Claude",
+          name: "Claude 旗舰",
+          color: "#b45309",
+          points: [
+            pointFromModel("claude-2", 0, "Claude 2", "Claude 2 时代旗舰"),
+            pointFromModel("claude-3-opus", 0, "Claude 3 Opus", "Claude 3 时代最高能力模型"),
+            pointFromModel("claude-opus-4", 0, "Opus 4", "Claude 4 高端线"),
+            pointFromModel("claude-opus-4-1", 0, "Opus 4.1", "沿用老 Opus 档", false),
+            pointFromModel("claude-opus-4-5", 0, "Opus 4.5", "Opus 标准价降到 $5/$25"),
+            pointFromModel("claude-opus-4-8", 0, "Opus 4.8", "当前 Opus 价位"),
+            pointFromModel("claude-fable-5", 0, "Fable 5", "新高端线回升")
+          ]
+        }
+      ];
+
+      return tracks
+        .filter(track => !applyProvider || state.provider === "all" || track.provider === state.provider)
+        .map(track => {
+          const points = q
+            ? track.points.filter(point => [track.name, point.modelName, point.short, point.note, point.apiModelId].join(" ").toLowerCase().includes(q))
+            : track.points;
+          return { ...track, points };
+        })
+        .filter(track => track.points.length);
     }
 
     function updateControls() {
@@ -1917,19 +1972,26 @@
     }
 
     function renderTierPanel() {
-      const { def, tracks } = tierTracks();
-      $("#tierTitle").textContent = def.title;
-      $("#tierNote").textContent = def.note;
-      $$("#tierControls button").forEach(btn => {
-        btn.classList.toggle("active", state.tier === btn.dataset.value);
-      });
-      renderTierChart(tracks);
+      const tracks = flagshipTracks();
+      $("#tierTitle").textContent = "旗舰模型价格复盘";
+      $("#tierNote").textContent = "只看每家主力旗舰 / 高端通用 API 模型：OpenAI 从 GPT-4 到 GPT-5.5，Claude 从 Claude 2 / Opus 到 Fable。这里不混入 mini、nano、Haiku、Pro、preview、Fast mode 或长上下文加价。";
+      tierPointCache = [];
+      renderTierChart("#flagshipInputChart", tracks, "input");
+      renderTierChart("#flagshipOutputChart", tracks, "output");
       renderTierInsight(tracks);
+    }
+
+    function deltaTextForMetric(from, to, metric) {
+      const fromPrice = priceForMetric(from, metric);
+      const toPrice = priceForMetric(to, metric);
+      const pct = ((toPrice - fromPrice) / fromPrice) * 100;
+      if (Math.abs(pct) < 0.5) return "持平";
+      return pct < 0 ? "降 " + Math.abs(pct).toFixed(0) + "%" : "升 " + pct.toFixed(0) + "%";
     }
 
     function renderTierInsight(tracks) {
       if (!tracks.length) {
-        $("#tierInsight").innerHTML = `<div class="tier-card"><b>没有匹配档位</b><span>可以清空搜索词，或切换 provider / 档位。</span></div>`;
+        $("#tierInsight").innerHTML = `<div class="tier-card"><b>没有匹配旗舰线</b><span>可以清空搜索词，或切换 provider。</span></div>`;
         return;
       }
 
@@ -1938,41 +2000,44 @@
         const points = [...track.points].sort((a, b) => parseDate(a.date) - parseDate(b.date));
         const start = points[0];
         const latest = points[points.length - 1];
-        const low = points.reduce((best, point) => priceOf(point) < priceOf(best) ? point : best, start);
-        const high = points.reduce((best, point) => priceOf(point) > priceOf(best) ? point : best, start);
+        const lowInput = points.reduce((best, point) => point.input < best.input ? point : best, start);
+        const lowOutput = points.reduce((best, point) => point.output < best.output ? point : best, start);
         cards.push(`
           <div class="tier-card">
             <span>${track.name}</span>
-            <b>${money(priceOf(start))} → ${money(priceOf(latest))}</b>
-            <div>起点 ${start.short}，最新 ${latest.short}，${deltaText(start, latest)}。</div>
-            <div>低点 ${low.short}：${money(priceOf(low))}；高点 ${high.short}：${money(priceOf(high))}。</div>
+            <b>输入 ${money(start.input)} → ${money(latest.input)}</b>
+            <div>输出 ${money(start.output)} → ${money(latest.output)}</div>
+            <div>输入${deltaTextForMetric(start, latest, "input")}，输出${deltaTextForMetric(start, latest, "output")}。</div>
+            <div>输入低点 ${lowInput.short}：${money(lowInput.input)}；输出低点 ${lowOutput.short}：${money(lowOutput.output)}。</div>
           </div>
         `);
       });
 
       const allPoints = tracks.flatMap(track => track.points);
-      const peak = allPoints.reduce((best, point) => priceOf(point) > priceOf(best) ? point : best, allPoints[0]);
-      const trough = allPoints.reduce((best, point) => priceOf(point) < priceOf(best) ? point : best, allPoints[0]);
+      const inputPeak = allPoints.reduce((best, point) => point.input > best.input ? point : best, allPoints[0]);
+      const inputTrough = allPoints.reduce((best, point) => point.input < best.input ? point : best, allPoints[0]);
+      const outputPeak = allPoints.reduce((best, point) => point.output > best.output ? point : best, allPoints[0]);
+      const outputTrough = allPoints.reduce((best, point) => point.output < best.output ? point : best, allPoints[0]);
       cards.push(`
         <div class="tier-card">
-          <span>这个档位的价格区间</span>
-          <b>${money(priceOf(trough))} - ${money(priceOf(peak))}</b>
-          <div>最低点是 ${trough.short}，最高点是 ${peak.short}。点击图上的点会同步到下面的模型详情。</div>
+          <span>旗舰价格区间</span>
+          <b>输入 ${money(inputTrough.input)} - ${money(inputPeak.input)}</b>
+          <div>输出 ${money(outputTrough.output)} - ${money(outputPeak.output)}。</div>
+          <div>点击图上的点会同步到下面的模型详情。</div>
         </div>
       `);
       $("#tierInsight").innerHTML = cards.join("");
     }
 
-    function renderTierChart(tracks) {
-      tierPointCache = [];
-      const svg = $("#tierChart");
+    function renderTierChart(selector, tracks, metric) {
+      const svg = $(selector);
       svg.innerHTML = "";
       const rect = svg.getBoundingClientRect();
       const width = Math.max(680, rect.width || 900);
       const height = 360;
       svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
       if (!tracks.length) {
-        svg.innerHTML = `<foreignObject x="0" y="0" width="${width}" height="${height}"><div class="empty">没有匹配档位</div></foreignObject>`;
+        svg.innerHTML = `<foreignObject x="0" y="0" width="${width}" height="${height}"><div class="empty">没有匹配旗舰线</div></foreignObject>`;
         return;
       }
 
@@ -1980,7 +2045,7 @@
       const plotW = width - margin.left - margin.right;
       const plotH = height - margin.top - margin.bottom;
       const allPoints = tracks.flatMap(track => track.points);
-      const values = allPoints.map(point => priceOf(point));
+      const values = allPoints.map(point => priceForMetric(point, metric));
       const minValue = Math.max(0.03, Math.min(...values) * 0.68);
       const maxValue = Math.max(...values) * 1.32;
       const logMin = Math.log10(minValue);
@@ -2009,30 +2074,30 @@
         let d = "";
         points.forEach((point, index) => {
           const px = x(point.date);
-          const py = y(priceOf(point));
+          const py = y(priceForMetric(point, metric));
           d += index === 0 ? `M ${px} ${py}` : ` L ${px} ${py}`;
         });
         svg.insertAdjacentHTML("beforeend", `<path class="tier-line" d="${d}" stroke="${track.color}"></path>`);
         svg.insertAdjacentHTML("beforeend", `<text class="tier-label" x="${margin.left + 8}" y="${margin.top + 16 + trackIndex * 18}" fill="${track.color}">${track.name}</text>`);
         points.forEach((point, index) => {
-          const cacheIndex = tierPointCache.push({ track, point }) - 1;
+          const cacheIndex = tierPointCache.push({ track, point, metric }) - 1;
           const px = x(point.date);
-          const py = y(priceOf(point));
+          const py = y(priceForMetric(point, metric));
           const selected = state.selected === point.modelId;
           svg.insertAdjacentHTML("beforeend", `<circle class="tier-point ${selected ? "selected" : ""}" data-index="${cacheIndex}" cx="${px}" cy="${py}" r="${selected ? 6 : 5}" fill="${track.color}"></circle>`);
           if (point.showLabel) {
             const labelY = index % 2 === 0 ? py - 11 : py + 19;
             svg.insertAdjacentHTML("beforeend", `<text class="tier-label" x="${px + 8}" y="${labelY}">${point.short}</text>`);
-            svg.insertAdjacentHTML("beforeend", `<text class="tier-note" x="${px + 8}" y="${labelY + 13}">${money(priceOf(point))}</text>`);
+            svg.insertAdjacentHTML("beforeend", `<text class="tier-note" x="${px + 8}" y="${labelY + 13}">${money(priceForMetric(point, metric))}</text>`);
           }
         });
       });
-      bindTierPointEvents();
+      bindTierPointEvents(selector);
     }
 
-    function bindTierPointEvents() {
+    function bindTierPointEvents(selector) {
       const tooltip = $("#tooltip");
-      $$("#tierChart .tier-point").forEach(node => {
+      $$(`${selector} .tier-point`).forEach(node => {
         node.addEventListener("mouseenter", (ev) => {
           const cached = tierPointCache[Number(node.dataset.index)];
           const point = cached.point;
@@ -2041,6 +2106,7 @@
             <b>${cached.track.name} · ${point.modelName}</b><br>
             ${fmtDate(point.date)} · ${point.apiModelId}<br>
             输入 ${money(point.input)}，输出 ${money(point.output)}<br>
+            <span class="muted">当前图：${cached.metric === "input" ? "输入价" : "输出价"} ${money(priceForMetric(point, cached.metric))}</span><br>
             <span class="muted">${point.note}</span><br>
             <span class="muted">来源：${source ? source.label : point.source}</span>
           `;
