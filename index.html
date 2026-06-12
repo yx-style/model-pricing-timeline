@@ -747,7 +747,7 @@
   </div>
 
   <script>
-    const CURRENT_DATE = "2026-06-11";
+    const CURRENT_DATE = "2026-06-12";
 
     const sources = {
       openaiChatgptApi: { label: "OpenAI: Introducing ChatGPT and Whisper APIs", url: "https://openai.com/index/introducing-chatgpt-and-whisper-apis/" },
@@ -764,6 +764,7 @@
       openaiGpt52: { label: "OpenAI: Introducing GPT-5.2", url: "https://openai.com/index/introducing-gpt-5-2/" },
       openaiGpt54: { label: "OpenAI: Introducing GPT-5.4", url: "https://openai.com/index/introducing-gpt-5-4/" },
       openaiGpt55: { label: "OpenAI: Introducing GPT-5.5", url: "https://openai.com/index/introducing-gpt-5-5/" },
+      openaiModelsAll: { label: "OpenAI API Docs: All models", url: "https://developers.openai.com/api/docs/models/all" },
       openaiPricing: { label: "OpenAI API pricing", url: "https://developers.openai.com/api/docs/pricing" },
       openaiDeprecations: { label: "OpenAI API deprecations", url: "https://developers.openai.com/api/docs/deprecations" },
       anthropicMay2023: { label: "Anthropic CDN: Model pricing PDF, May 2023", url: "https://www-cdn.anthropic.com/b0d46f8c8e2f4cca2833c17cb68435035c0bb5a9/apr-pricing-tokens_2023-05-10-213025_tnty.pdf" },
@@ -855,14 +856,15 @@
         provider: "OpenAI",
         family: "GPT-4o",
         name: "GPT-4o",
-        status: "active",
-        summary: "2024-05-13 上线时已经比 GPT-4 Turbo 便宜 50%；2024-08-06 新 snapshot 再降到 $2.5/M 输入、$10/M 输出。",
+        status: "deprecated",
+        summary: "2024-05-13 上线时已经比 GPT-4 Turbo 便宜 50%；2024-08-06 新 snapshot 再降到 $2.5/M 输入、$10/M 输出。官方当前模型目录已把 base GPT-4o 标为 Deprecated，但退役页未列出 base gpt-4o 的明确 shutdown date。",
         events: [
           { date: "2024-05-13", input: 5.00, output: 15.00, modelId: "gpt-4o-2024-05-13", label: "GPT-4o 上线，约为 GPT-4 Turbo 半价", source: "openai4o" },
           { date: "2024-08-06", input: 2.50, output: 10.00, modelId: "gpt-4o-2024-08-06", label: "新 snapshot：输入省 50%，输出省 33%", source: "openaiStructured" },
           { date: "2024-11-20", input: 2.50, output: 10.00, modelId: "gpt-4o-2024-11-20", label: "后续 snapshot，价格不变", source: "openaiPricing" }
         ],
         lifecycle: [
+          { date: "2026-06-12", label: "官方模型目录当前标为 Deprecated；base gpt-4o 未在退役页看到明确 shutdown date", source: "openaiModelsAll", type: "note" },
           { date: "2026-02-13", label: "ChatGPT 中退役；API 当时不变", source: "openaiDeprecations", type: "note" },
           { date: "2026-10-23", label: "2024-05-13 旧 snapshot 计划关闭", source: "openaiDeprecations", type: "retire" }
         ]
