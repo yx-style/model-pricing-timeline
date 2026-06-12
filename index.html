@@ -1,0 +1,2161 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>OpenAI / Claude 模型 API 定价历史</title>
+  <style>
+    :root {
+      --bg: #f6f7f9;
+      --panel: #ffffff;
+      --ink: #171a1f;
+      --muted: #667085;
+      --line: #d7dce3;
+      --soft: #eef1f5;
+      --openai: #0f766e;
+      --claude: #b45309;
+      --accent: #2563eb;
+      --danger: #b42318;
+      --shadow: 0 18px 45px rgba(17, 24, 39, .08);
+      --radius: 8px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: "Avenir Next", "Helvetica Neue", "PingFang SC", "Noto Sans CJK SC", sans-serif;
+      letter-spacing: 0;
+    }
+
+    a { color: inherit; }
+
+    .wrap {
+      width: min(1480px, calc(100vw - 32px));
+      margin: 0 auto;
+      padding: 28px 0 40px;
+    }
+
+    header {
+      display: grid;
+      grid-template-columns: minmax(0, 1.4fr) minmax(320px, .6fr);
+      gap: 18px;
+      align-items: end;
+      margin-bottom: 18px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(28px, 3.7vw, 50px);
+      line-height: 1.05;
+      font-weight: 750;
+      max-width: 920px;
+    }
+
+    .title-line {
+      display: block;
+      white-space: nowrap;
+    }
+
+    .subtitle {
+      margin: 14px 0 0;
+      color: var(--muted);
+      font-size: 15px;
+      line-height: 1.65;
+      max-width: 940px;
+    }
+
+    .scope-card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 16px;
+      box-shadow: var(--shadow);
+      font-size: 13px;
+      line-height: 1.55;
+      color: #3b4452;
+    }
+
+    .scope-card strong { color: var(--ink); }
+
+    .toolbar {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 12px;
+      display: grid;
+      grid-template-columns: auto auto auto minmax(220px, 1fr);
+      gap: 10px;
+      align-items: center;
+      box-shadow: var(--shadow);
+      margin-bottom: 14px;
+    }
+
+    .group {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px;
+      background: var(--soft);
+      border-radius: 7px;
+    }
+
+    button {
+      border: 0;
+      background: transparent;
+      color: #344054;
+      padding: 8px 10px;
+      border-radius: 6px;
+      font: inherit;
+      font-size: 13px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    button.active {
+      background: var(--panel);
+      color: var(--ink);
+      box-shadow: 0 1px 4px rgba(0, 0, 0, .12);
+    }
+
+    .search {
+      width: 100%;
+      height: 38px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      padding: 0 12px;
+      font: inherit;
+      font-size: 13px;
+      color: var(--ink);
+      background: #fff;
+    }
+
+    .main {
+      display: grid;
+      grid-template-columns: 330px minmax(0, 1fr);
+      gap: 14px;
+      align-items: stretch;
+    }
+
+    .sidebar,
+    .chart-panel,
+    .tier-panel,
+    .detail-panel,
+    .sources {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+
+    .sidebar {
+      overflow: hidden;
+      min-height: 640px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .sidebar-head {
+      padding: 14px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .sidebar-head h2,
+    .panel-title {
+      margin: 0;
+      font-size: 14px;
+      font-weight: 730;
+    }
+
+    .count {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .model-list {
+      overflow: auto;
+      padding: 8px;
+      max-height: 860px;
+    }
+
+    .model-item {
+      width: 100%;
+      text-align: left;
+      border: 1px solid transparent;
+      background: transparent;
+      border-radius: 7px;
+      padding: 10px;
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .model-item:hover { background: #f9fafb; }
+
+    .model-item.selected {
+      background: #eef6ff;
+      border-color: #b9d6ff;
+      box-shadow: none;
+    }
+
+    .model-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .model-name {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 680;
+      font-size: 13px;
+      min-width: 0;
+    }
+
+    .dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      flex: 0 0 auto;
+    }
+
+    .pill {
+      font-size: 11px;
+      border: 1px solid var(--line);
+      color: #475467;
+      border-radius: 999px;
+      padding: 3px 7px;
+      background: #fff;
+      flex: 0 0 auto;
+    }
+
+    .pill.retired { color: var(--danger); border-color: #f2b8b5; background: #fff7f7; }
+    .pill.active { color: #05603a; border-color: #a6f4c5; background: #f6fef9; }
+    .pill.deprecated { color: #93370d; border-color: #fedf89; background: #fffcf5; }
+
+    .model-meta {
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.4;
+    }
+
+    .chart-panel {
+      min-height: 640px;
+      padding: 14px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .chart-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 8px;
+    }
+
+    .chart-note {
+      color: var(--muted);
+      margin-top: 5px;
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    .stats {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .stat {
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      padding: 8px 10px;
+      min-width: 118px;
+      background: #fbfcfe;
+    }
+
+    .stat b {
+      display: block;
+      font-size: 16px;
+      line-height: 1.2;
+    }
+
+    .stat span {
+      color: var(--muted);
+      font-size: 11px;
+    }
+
+    svg {
+      width: 100%;
+      height: 560px;
+      display: block;
+      overflow: visible;
+    }
+
+    .axis text {
+      fill: #667085;
+      font-size: 11px;
+    }
+
+    .grid {
+      stroke: #dfe4ea;
+      stroke-width: 1;
+    }
+
+    .axis-line {
+      stroke: #98a2b3;
+      stroke-width: 1;
+    }
+
+    .series {
+      fill: none;
+      stroke-linejoin: round;
+      stroke-linecap: round;
+      opacity: .72;
+      transition: opacity .15s, stroke-width .15s;
+    }
+
+    .series.dim { opacity: .32; }
+    .series.selected { opacity: 1; stroke-width: 3.5; }
+
+    .point {
+      stroke: #fff;
+      stroke-width: 1.5;
+      cursor: pointer;
+      opacity: .95;
+    }
+
+    .point.dim { opacity: .45; }
+    .point.selected { stroke: #111827; stroke-width: 2; }
+
+    .lane-label {
+      font-size: 11px;
+      fill: #344054;
+      font-weight: 650;
+    }
+
+    .lane-line {
+      stroke-width: 6;
+      stroke-linecap: round;
+      opacity: .35;
+    }
+
+    .lane-line.selected { opacity: .9; }
+
+    .retire-mark {
+      stroke: var(--danger);
+      stroke-width: 2;
+    }
+
+    .frontier-band {
+      fill: #f8fafc;
+      stroke: #e4e7ec;
+      stroke-width: 1;
+    }
+
+    .frontier-line {
+      fill: none;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-width: 4;
+    }
+
+    .frontier-point {
+      stroke: #fff;
+      stroke-width: 2;
+      cursor: pointer;
+    }
+
+    .frontier-point.selected {
+      stroke: #111827;
+      stroke-width: 2.5;
+    }
+
+    .frontier-label {
+      fill: #344054;
+      font-size: 11px;
+      font-weight: 650;
+    }
+
+    .frontier-note {
+      fill: #667085;
+      font-size: 11px;
+    }
+
+    .tier-panel {
+      margin-top: 14px;
+      padding: 14px;
+    }
+
+    .tier-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 16px;
+      margin-bottom: 12px;
+    }
+
+    .tier-head p {
+      margin: 5px 0 0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .tier-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 330px;
+      gap: 14px;
+      align-items: stretch;
+    }
+
+    .tier-chart-wrap {
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: #fbfcfe;
+      padding: 10px;
+      overflow: hidden;
+    }
+
+    #tierChart {
+      height: 360px;
+    }
+
+    .tier-line {
+      fill: none;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-width: 3.5;
+    }
+
+    .tier-point {
+      stroke: #fff;
+      stroke-width: 2;
+      cursor: pointer;
+    }
+
+    .tier-point.selected {
+      stroke: #111827;
+      stroke-width: 2.5;
+    }
+
+    .tier-label {
+      fill: #344054;
+      font-size: 11px;
+      font-weight: 650;
+    }
+
+    .tier-note {
+      fill: #667085;
+      font-size: 11px;
+    }
+
+    .tier-insight {
+      display: grid;
+      gap: 10px;
+      align-content: start;
+    }
+
+    .tier-card {
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      padding: 11px;
+      background: #fbfcfe;
+      font-size: 12px;
+      line-height: 1.55;
+    }
+
+    .tier-card b {
+      display: block;
+      font-size: 16px;
+      line-height: 1.25;
+      margin: 2px 0 5px;
+    }
+
+    .tier-card span {
+      color: var(--muted);
+    }
+
+    .tooltip {
+      position: fixed;
+      pointer-events: none;
+      z-index: 10;
+      min-width: 240px;
+      max-width: 360px;
+      background: #111827;
+      color: #fff;
+      border-radius: 7px;
+      padding: 10px 11px;
+      font-size: 12px;
+      line-height: 1.45;
+      box-shadow: 0 15px 35px rgba(0, 0, 0, .22);
+      opacity: 0;
+      transform: translate(-9999px, -9999px);
+      transition: opacity .1s;
+    }
+
+    .tooltip.visible { opacity: 1; }
+    .tooltip b { font-size: 13px; }
+    .tooltip .muted { color: #cbd5e1; }
+
+    .detail-panel {
+      margin-top: 14px;
+      padding: 14px;
+    }
+
+    .detail-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 280px;
+      gap: 16px;
+      align-items: start;
+    }
+
+    .detail-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .detail-title h2 {
+      margin: 0;
+      font-size: 20px;
+      line-height: 1.15;
+    }
+
+    .detail-copy {
+      color: #475467;
+      line-height: 1.65;
+      font-size: 13px;
+      margin: 0 0 12px;
+    }
+
+    .model-meta,
+    .detail-copy,
+    .scope-card,
+    th,
+    td {
+      overflow-wrap: anywhere;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+    }
+
+    th, td {
+      text-align: left;
+      border-bottom: 1px solid var(--line);
+      padding: 8px 6px;
+      vertical-align: top;
+    }
+
+    th {
+      color: #667085;
+      font-weight: 650;
+      background: #fbfcfe;
+    }
+
+    .mini-card {
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      padding: 12px;
+      background: #fbfcfe;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .mini-card b {
+      display: block;
+      font-size: 22px;
+      line-height: 1.2;
+      margin: 4px 0;
+    }
+
+    .sources {
+      margin-top: 14px;
+      padding: 14px;
+      color: #475467;
+      font-size: 12px;
+      line-height: 1.6;
+    }
+
+    .sources h2 {
+      margin: 0 0 10px;
+      color: var(--ink);
+      font-size: 14px;
+    }
+
+    .source-grid {
+      columns: 2 360px;
+      column-gap: 26px;
+    }
+
+    .source-grid p {
+      break-inside: avoid;
+      margin: 0 0 8px;
+    }
+
+    .empty {
+      height: 360px;
+      display: grid;
+      place-items: center;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    @media (max-width: 980px) {
+      .wrap {
+        width: min(1480px, calc(100vw - 24px));
+      }
+
+      header,
+      .main,
+      .detail-grid,
+      .toolbar,
+      .tier-layout {
+        grid-template-columns: 1fr;
+      }
+
+      .title-line {
+        white-space: normal;
+      }
+
+      .stats { justify-content: flex-start; }
+      .stat { min-width: 0; }
+      .tier-head { display: block; }
+      .tier-head .group { margin-top: 10px; flex-wrap: wrap; }
+      .sidebar { min-height: auto; }
+      .model-list { max-height: 360px; }
+      svg { height: 520px; }
+      #tierChart { height: 420px; }
+
+      table {
+        display: block;
+        max-width: 100%;
+        overflow-x: auto;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div>
+        <h1><span class="title-line">OpenAI / Claude API</span><span class="title-line">模型定价历史</span></h1>
+        <p class="subtitle">统计到 2026-06-11。只看官方一方 API 的标准文本输入、标准文本输出公开价，统一成美元 / 100 万 token；不把 Batch、缓存输入、Priority/Fast、区域加价、图像/音频/工具调用费混进主图。</p>
+      </div>
+      <div class="scope-card">
+        <strong>口径说明：</strong>这里只放官方发布稿、官方价格页、官方 API 文档能直接支持的价格节点。比如 GPT-4o 从 2024-05-13 snapshot 到 2024-08-06 snapshot 发生过官方降价；没有官方直接价格点的历史价不纳入主图。
+      </div>
+    </header>
+
+    <section class="toolbar" aria-label="筛选控件">
+      <div class="group" data-control="provider">
+        <button class="active" data-value="all">全部</button>
+        <button data-value="OpenAI">OpenAI</button>
+        <button data-value="Claude">Claude</button>
+      </div>
+      <div class="group" data-control="metric">
+        <button class="active" data-value="input">输入价</button>
+        <button data-value="output">输出价</button>
+        <button data-value="roundtrip">输入+输出</button>
+      </div>
+      <div class="group" data-control="view">
+        <button class="active" data-value="price">价格曲线</button>
+        <button data-value="timeline">上线/退役</button>
+        <button data-value="frontier">头部趋势</button>
+      </div>
+      <input class="search" id="search" type="search" placeholder="搜索模型，例如 GPT-4o、GPT-5.5、Sonnet、Opus" />
+    </section>
+
+    <main class="main">
+      <aside class="sidebar">
+        <div class="sidebar-head">
+          <h2>模型列表</h2>
+          <span class="count" id="modelCount"></span>
+        </div>
+        <div class="model-list" id="modelList"></div>
+      </aside>
+
+      <section class="chart-panel">
+        <div class="chart-head">
+          <div>
+            <h2 class="panel-title" id="chartTitle">价格曲线</h2>
+            <div class="chart-note" id="chartNote">纵轴使用对数刻度，否则 GPT-4.5、Claude Opus 和 Haiku 这类低价模型会挤在一起。</div>
+          </div>
+          <div class="stats" id="stats"></div>
+        </div>
+        <svg id="chart" role="img" aria-label="模型定价交互图"></svg>
+        <div class="tooltip" id="tooltip"></div>
+      </section>
+    </main>
+
+    <section class="tier-panel" aria-label="同档位价格复盘">
+      <div class="tier-head">
+        <div>
+          <h2 class="panel-title" id="tierTitle">同档位价格复盘</h2>
+          <p id="tierNote">按同一商业档位横向比较跨代模型，方便看旗舰、主力、轻量模型的价格中枢变化；价格口径跟主图一致。</p>
+        </div>
+        <div class="group" id="tierControls" data-control="tier">
+          <button class="active" data-value="flagship">旗舰/高端</button>
+          <button data-value="workhorse">主力通用</button>
+          <button data-value="budget">轻量低价</button>
+          <button data-value="premium">高价/Pro</button>
+        </div>
+      </div>
+      <div class="tier-layout">
+        <div class="tier-chart-wrap">
+          <svg id="tierChart" role="img" aria-label="同档位模型价格复盘图"></svg>
+        </div>
+        <div class="tier-insight" id="tierInsight"></div>
+      </div>
+    </section>
+
+    <section class="detail-panel" id="details"></section>
+
+    <section class="sources">
+      <h2>主要来源</h2>
+      <div class="source-grid" id="sources"></div>
+    </section>
+  </div>
+
+  <script>
+    const CURRENT_DATE = "2026-06-11";
+
+    const sources = {
+      openaiChatgptApi: { label: "OpenAI: Introducing ChatGPT and Whisper APIs", url: "https://openai.com/index/introducing-chatgpt-and-whisper-apis/" },
+      openaiGpt4: { label: "OpenAI: GPT-4 research release", url: "https://openai.com/index/gpt-4-research/" },
+      openaiJun2023: { label: "OpenAI: Function calling and other API updates", url: "https://openai.com/index/function-calling-and-other-api-updates/" },
+      openaiDevday: { label: "OpenAI: New models and developer products announced at DevDay", url: "https://openai.com/index/new-models-and-developer-products-announced-at-devday/" },
+      openaiJan2024: { label: "OpenAI: New embedding models and API updates", url: "https://openai.com/index/new-embedding-models-and-api-updates/" },
+      openai4o: { label: "OpenAI: Hello GPT-4o", url: "https://openai.com/index/hello-gpt-4o/" },
+      openaiStructured: { label: "OpenAI: Introducing Structured Outputs in the API", url: "https://openai.com/index/introducing-structured-outputs-in-the-api/" },
+      openai4oMini: { label: "OpenAI: GPT-4o mini", url: "https://openai.com/index/gpt-4o-mini-advancing-cost-efficient-intelligence/" },
+      openai45: { label: "OpenAI API Docs: GPT-4.5 Preview model", url: "https://developers.openai.com/api/docs/models/gpt-4.5-preview" },
+      openai41: { label: "OpenAI: Introducing GPT-4.1 in the API", url: "https://openai.com/index/gpt-4-1/" },
+      openaiGpt5: { label: "OpenAI: Introducing GPT-5 for developers", url: "https://openai.com/index/introducing-gpt-5-for-developers/" },
+      openaiGpt52: { label: "OpenAI: Introducing GPT-5.2", url: "https://openai.com/index/introducing-gpt-5-2/" },
+      openaiGpt54: { label: "OpenAI: Introducing GPT-5.4", url: "https://openai.com/index/introducing-gpt-5-4/" },
+      openaiGpt55: { label: "OpenAI: Introducing GPT-5.5", url: "https://openai.com/index/introducing-gpt-5-5/" },
+      openaiPricing: { label: "OpenAI API pricing", url: "https://developers.openai.com/api/docs/pricing" },
+      openaiDeprecations: { label: "OpenAI API deprecations", url: "https://developers.openai.com/api/docs/deprecations" },
+      anthropicMay2023: { label: "Anthropic CDN: Model pricing PDF, May 2023", url: "https://www-cdn.anthropic.com/b0d46f8c8e2f4cca2833c17cb68435035c0bb5a9/apr-pricing-tokens_2023-05-10-213025_tnty.pdf" },
+      anthropicJul2023: { label: "Anthropic CDN: Model pricing PDF, July 2023", url: "https://www-cdn.anthropic.com/90df03aed08b794ab03c5a7bf28b2ad9cf26cf3c/model_pricing_july2023.pdf" },
+      anthropicClaude3: { label: "Anthropic: Introducing the next generation of Claude", url: "https://www.anthropic.com/news/claude-3-family" },
+      anthropic35Sonnet: { label: "Anthropic: Introducing Claude 3.5 Sonnet", url: "https://www.anthropic.com/news/claude-3-5-sonnet" },
+      anthropic35Haiku: { label: "Anthropic: 3.5 models and computer use", url: "https://www.anthropic.com/news/3-5-models-and-computer-use" },
+      anthropicHaikuCut: { label: "Anthropic: Claude 3.5 Haiku lower prices", url: "https://www.anthropic.com/news/trainium2-and-distillation" },
+      anthropic37: { label: "Anthropic: Claude 3.7 Sonnet and Claude Code", url: "https://www.anthropic.com/news/claude-3-7-sonnet" },
+      anthropic4: { label: "Anthropic: Introducing Claude 4", url: "https://www.anthropic.com/news/claude-4" },
+      anthropicSonnet45: { label: "Anthropic: Introducing Claude Sonnet 4.5", url: "https://www.anthropic.com/news/claude-sonnet-4-5" },
+      anthropicHaiku45: { label: "Anthropic: Introducing Claude Haiku 4.5", url: "https://www.anthropic.com/news/claude-haiku-4-5" },
+      anthropicSonnet46: { label: "Anthropic: Introducing Claude Sonnet 4.6", url: "https://www.anthropic.com/news/claude-sonnet-4-6" },
+      anthropicOpus46: { label: "Anthropic: Introducing Claude Opus 4.6", url: "https://www.anthropic.com/news/claude-opus-4-6" },
+      anthropicOpus47: { label: "Anthropic: Introducing Claude Opus 4.7", url: "https://www.anthropic.com/news/claude-opus-4-7" },
+      anthropicOpus48: { label: "Anthropic: Introducing Claude Opus 4.8", url: "https://www.anthropic.com/news/claude-opus-4-8" },
+      anthropicPricing: { label: "Claude API Docs: Pricing", url: "https://platform.claude.com/docs/en/about-claude/pricing" },
+      anthropicDeprecations: { label: "Claude API Docs: Model deprecations", url: "https://platform.claude.com/docs/en/about-claude/model-deprecations" },
+      anthropicNews: { label: "Anthropic newsroom", url: "https://www.anthropic.com/news" }
+    };
+
+    const models = [
+      {
+        id: "gpt-3-5-turbo",
+        provider: "OpenAI",
+        family: "GPT-3.5",
+        name: "GPT-3.5 Turbo",
+        status: "deprecated",
+        retire: "2026-10-23",
+        summary: "OpenAI 早期低价 chat API。2023 年内连续三次降价，后续计划在 2026-10-23 关闭旧 snapshot / alias。",
+        events: [
+          { date: "2023-03-01", input: 2.00, output: 2.00, modelId: "gpt-3.5-turbo", label: "上线，统一 $0.002/1K tokens", source: "openaiChatgptApi" },
+          { date: "2023-06-13", input: 1.50, output: 2.00, modelId: "gpt-3.5-turbo-0613", label: "输入价降到 $1.50/M，输出价 $2/M", source: "openaiJun2023" },
+          { date: "2023-11-06", input: 1.00, output: 2.00, modelId: "gpt-3.5-turbo-1106", label: "DevDay 新版本，默认 16K，上线 $1/M 输入、$2/M 输出", source: "openaiDevday" },
+          { date: "2024-01-25", input: 0.50, output: 1.50, modelId: "gpt-3.5-turbo-0125", label: "0125 版本继续降价，输入 -50%、输出 -25%", source: "openaiJan2024" }
+        ],
+        lifecycle: [
+          { date: "2026-10-23", label: "计划 API 关闭", source: "openaiDeprecations", type: "retire" }
+        ]
+      },
+      {
+        id: "gpt-4",
+        provider: "OpenAI",
+        family: "GPT-4",
+        name: "GPT-4 8K",
+        status: "deprecated",
+        retire: "2026-10-23",
+        summary: "GPT-4 初始 API 价格，8K context。后续被 GPT-4 Turbo、GPT-4o、GPT-4.1 和 GPT-5 系列替代。",
+        events: [
+          { date: "2023-03-14", input: 30.00, output: 60.00, modelId: "gpt-4 / gpt-4-0314", label: "初始 8K 版本价格", source: "openaiGpt4" }
+        ],
+        lifecycle: [
+          { date: "2026-03-26", label: "gpt-4-0314 已关闭", source: "openaiDeprecations", type: "retire" },
+          { date: "2026-10-23", label: "gpt-4-0613 / gpt-4 alias 计划关闭", source: "openaiDeprecations", type: "retire" }
+        ]
+      },
+      {
+        id: "gpt-4-32k",
+        provider: "OpenAI",
+        family: "GPT-4",
+        name: "GPT-4 32K",
+        status: "retired",
+        retire: "2025-06-06",
+        summary: "GPT-4 长上下文早期版本，价格是 8K 版的两倍；API 已在 2025-06-06 关闭。",
+        events: [
+          { date: "2023-03-14", input: 60.00, output: 120.00, modelId: "gpt-4-32k", label: "初始 32K 版本价格", source: "openaiGpt4" }
+        ],
+        lifecycle: [
+          { date: "2025-06-06", label: "API 关闭", source: "openaiDeprecations", type: "retire" }
+        ]
+      },
+      {
+        id: "gpt-4-turbo",
+        provider: "OpenAI",
+        family: "GPT-4",
+        name: "GPT-4 Turbo",
+        status: "deprecated",
+        retire: "2026-10-23",
+        summary: "DevDay 2023 发布，128K context，输入价约为 GPT-4 的三分之一，输出价约为一半。",
+        events: [
+          { date: "2023-11-06", input: 10.00, output: 30.00, modelId: "gpt-4-1106-preview / gpt-4-turbo", label: "GPT-4 Turbo 上线价格", source: "openaiDevday" }
+        ],
+        lifecycle: [
+          { date: "2026-10-23", label: "gpt-4-turbo / 2024-04-09 计划关闭", source: "openaiDeprecations", type: "retire" }
+        ]
+      },
+      {
+        id: "gpt-4o",
+        provider: "OpenAI",
+        family: "GPT-4o",
+        name: "GPT-4o",
+        status: "active",
+        summary: "2024-05-13 上线时已经比 GPT-4 Turbo 便宜 50%；2024-08-06 新 snapshot 再降到 $2.5/M 输入、$10/M 输出。",
+        events: [
+          { date: "2024-05-13", input: 5.00, output: 15.00, modelId: "gpt-4o-2024-05-13", label: "GPT-4o 上线，约为 GPT-4 Turbo 半价", source: "openai4o" },
+          { date: "2024-08-06", input: 2.50, output: 10.00, modelId: "gpt-4o-2024-08-06", label: "新 snapshot：输入省 50%，输出省 33%", source: "openaiStructured" },
+          { date: "2024-11-20", input: 2.50, output: 10.00, modelId: "gpt-4o-2024-11-20", label: "后续 snapshot，价格不变", source: "openaiPricing" }
+        ],
+        lifecycle: [
+          { date: "2026-02-13", label: "ChatGPT 中退役；API 当时不变", source: "openaiDeprecations", type: "note" },
+          { date: "2026-10-23", label: "2024-05-13 旧 snapshot 计划关闭", source: "openaiDeprecations", type: "retire" }
+        ]
+      },
+      {
+        id: "gpt-4o-mini",
+        provider: "OpenAI",
+        family: "GPT-4o",
+        name: "GPT-4o mini",
+        status: "active",
+        summary: "OpenAI 2024 年推出的低价小模型，官方称比 GPT-3.5 Turbo 便宜 60% 以上。",
+        events: [
+          { date: "2024-07-18", input: 0.15, output: 0.60, modelId: "gpt-4o-mini-2024-07-18", label: "上线价格", source: "openai4oMini" }
+        ],
+        lifecycle: []
+      },
+      {
+        id: "gpt-4-5-preview",
+        provider: "OpenAI",
+        family: "GPT-4.5",
+        name: "GPT-4.5 Preview",
+        status: "retired",
+        retire: "2025-07-14",
+        summary: "非常昂贵的大模型预览版，API 文档显示 $75/M 输入、$150/M 输出；2025-07-14 退役。",
+        events: [
+          { date: "2025-02-28", input: 75.00, output: 150.00, modelId: "gpt-4.5-preview", label: "预览版 API 价格", source: "openai45" }
+        ],
+        lifecycle: [
+          { date: "2025-07-14", label: "API 关闭", source: "openaiDeprecations", type: "retire" }
+        ]
+      },
+      {
+        id: "gpt-4-1",
+        provider: "OpenAI",
+        family: "GPT-4.1",
+        name: "GPT-4.1",
+        status: "active",
+        summary: "GPT-4.1 系列 2025-04-14 推出，主模型 $2/M 输入、$8/M 输出，是 GPT-4o 2024-08 价格以下的新主力非推理模型。",
+        events: [
+          { date: "2025-04-14", input: 2.00, output: 8.00, modelId: "gpt-4.1-2025-04-14", label: "上线价格", source: "openai41" }
+        ],
+        lifecycle: []
+      },
+      {
+        id: "gpt-4-1-mini",
+        provider: "OpenAI",
+        family: "GPT-4.1",
+        name: "GPT-4.1 mini",
+        status: "active",
+        summary: "GPT-4.1 的低成本版本，2025-04-14 上线，价格明显低于 GPT-4o mini 与 GPT-4.1 主模型之间的中间档。",
+        events: [
+          { date: "2025-04-14", input: 0.40, output: 1.60, modelId: "gpt-4.1-mini-2025-04-14", label: "上线价格", source: "openaiPricing" }
+        ],
+        lifecycle: []
+      },
+      {
+        id: "gpt-4-1-nano",
+        provider: "OpenAI",
+        family: "GPT-4.1",
+        name: "GPT-4.1 nano",
+        status: "deprecated",
+        retire: "2026-10-23",
+        summary: "GPT-4.1 系列最小版本，上线时 $0.10/M 输入、$0.40/M 输出；旧 snapshot 计划在 2026-10-23 关闭。",
+        events: [
+          { date: "2025-04-14", input: 0.10, output: 0.40, modelId: "gpt-4.1-nano-2025-04-14", label: "上线价格", source: "openaiPricing" }
+        ],
+        lifecycle: [
+          { date: "2026-10-23", label: "计划 API 关闭", source: "openaiDeprecations", type: "retire" }
+        ]
+      },
+      {
+        id: "gpt-5",
+        provider: "OpenAI",
+        family: "GPT-5",
+        name: "GPT-5",
+        status: "active",
+        summary: "GPT-5 API 2025-08-07 上线，主模型 $1.25/M 输入、$10/M 输出，mini 和 nano 分别压到更低价格。",
+        events: [
+          { date: "2025-08-07", input: 1.25, output: 10.00, modelId: "gpt-5", label: "上线价格", source: "openaiGpt5" }
+        ],
+        lifecycle: [
+          { date: "2026-07-23", label: "gpt-5-chat-latest 计划关闭，主 gpt-5 未按此条关闭", source: "openaiDeprecations", type: "note" }
+        ]
+      },
+      {
+        id: "gpt-5-mini",
+        provider: "OpenAI",
+        family: "GPT-5",
+        name: "GPT-5 mini",
+        status: "active",
+        summary: "GPT-5 小模型，价格延续 GPT-4o mini 之后的低价路线。",
+        events: [
+          { date: "2025-08-07", input: 0.25, output: 2.00, modelId: "gpt-5-mini", label: "上线价格", source: "openaiGpt5" }
+        ],
+        lifecycle: []
+      },
+      {
+        id: "gpt-5-nano",
+        provider: "OpenAI",
+        family: "GPT-5",
+        name: "GPT-5 nano",
+        status: "active",
+        summary: "GPT-5 最小版本，上线价 $0.05/M 输入、$0.40/M 输出。",
+        events: [
+          { date: "2025-08-07", input: 0.05, output: 0.40, modelId: "gpt-5-nano", label: "上线价格", source: "openaiGpt5" }
+        ],
+        lifecycle: []
+      },
+      {
+        id: "gpt-5-2",
+        provider: "OpenAI",
+        family: "GPT-5",
+        name: "GPT-5.2",
+        status: "active",
+        summary: "GPT-5.2 比 GPT-5 / GPT-5.1 更贵，官方解释是能力提升和 token 效率提升。",
+        events: [
+          { date: "2025-12-11", input: 1.75, output: 14.00, modelId: "gpt-5.2 / gpt-5.2-chat-latest", label: "上线价格", source: "openaiGpt52" }
+        ],
+        lifecycle: [
+          { date: "2026-08-10", label: "gpt-5.2-chat-latest 计划关闭", source: "openaiDeprecations", type: "retire" }
+        ]
+      },
+      {
+        id: "gpt-5-4",
+        provider: "OpenAI",
+        family: "GPT-5",
+        name: "GPT-5.4",
+        status: "active",
+        summary: "GPT-5.4 2026-03-05 上线，标准短上下文价 $2.50/M 输入、$15/M 输出；长上下文另有更高价格。",
+        events: [
+          { date: "2026-03-05", input: 2.50, output: 15.00, modelId: "gpt-5.4", label: "上线价格", source: "openaiGpt54" }
+        ],
+        lifecycle: []
+      },
+      {
+        id: "gpt-5-4-mini",
+        provider: "OpenAI",
+        family: "GPT-5",
+        name: "GPT-5.4 mini",
+        status: "active",
+        summary: "GPT-5.4 mini 当前标准价格 $0.75/M 输入、$4.50/M 输出。",
+        events: [
+          { date: "2026-03-05", input: 0.75, output: 4.50, modelId: "gpt-5.4-mini", label: "上线价格", source: "openaiPricing" }
+        ],
+        lifecycle: []
+      },
+      {
+        id: "gpt-5-5",
+        provider: "OpenAI",
+        family: "GPT-5",
+        name: "GPT-5.5",
+        status: "active",
+        summary: "GPT-5.5 2026-04-23 发布，2026-04-24 API 可用。当前标准短上下文价 $5/M 输入、$30/M 输出。",
+        events: [
+          { date: "2026-04-24", input: 5.00, output: 30.00, modelId: "gpt-5.5", label: "API 可用后的标准价格", source: "openaiGpt55" }
+        ],
+        lifecycle: []
+      },
+      {
+        id: "gpt-5-5-pro",
+        provider: "OpenAI",
+        family: "GPT-5",
+        name: "GPT-5.5 Pro",
+        status: "active",
+        summary: "GPT-5.5 的高精度版本，当前 API 标准短上下文价 $30/M 输入、$180/M 输出。",
+        events: [
+          { date: "2026-04-24", input: 30.00, output: 180.00, modelId: "gpt-5.5-pro", label: "API 可用后的标准价格", source: "openaiGpt55" }
+        ],
+        lifecycle: []
+      },
+      {
+        id: "o3",
+        provider: "OpenAI",
+        family: "o-series",
+        name: "OpenAI o3",
+        status: "active",
+        summary: "当前官方标准 API 价格为 $2/M 输入、$8/M 输出。没有官方价格页直接支撑的旧价未纳入主图。",
+        events: [
+          { date: "2025-06-10", input: 2.00, output: 8.00, modelId: "o3", label: "官方当前标准 API 价格", source: "openaiPricing" }
+        ],
+        lifecycle: []
+      },
+      {
+        id: "claude-instant",
+        provider: "Claude",
+        family: "Claude 1/2",
+        name: "Claude Instant",
+        status: "retired",
+        retire: "2024-11-06",
+        summary: "Claude 早期低延迟版本。Anthropic 2023 年 PDF 显示 $1.63/M prompt、$5.51/M completion，2024-11-06 退役。",
+        events: [
+          { date: "2023-05-10", input: 1.63, output: 5.51, modelId: "claude-instant-1.x", label: "早期公开价格", source: "anthropicMay2023" }
+        ],
+        lifecycle: [
+          { date: "2024-11-06", label: "API 退役", source: "anthropicDeprecations", type: "retire" }
+        ]
+      },
+      {
+        id: "claude-2",
+        provider: "Claude",
+        family: "Claude 1/2",
+        name: "Claude 2 / 2.1",
+        status: "retired",
+        retire: "2025-07-21",
+        summary: "Claude 2 早期官方 PDF 价格为 $11.02/M 输入、$32.68/M 输出；Claude 2 / 2.1 后续在 2025-07-21 退役。Claude 2.1 未单独纳入没有官方价格页直接支撑的历史价格点。",
+        events: [
+          { date: "2023-07-26", input: 11.02, output: 32.68, modelId: "claude-2", label: "July 2023 官方 pricing PDF；Claude 1 当时也同价", source: "anthropicJul2023" }
+        ],
+        lifecycle: [
+          { date: "2025-07-21", label: "Claude 2 / 2.1 API 退役", source: "anthropicDeprecations", type: "retire" }
+        ]
+      },
+      {
+        id: "claude-3-opus",
+        provider: "Claude",
+        family: "Opus",
+        name: "Claude 3 Opus",
+        status: "retired",
+        retire: "2026-01-05",
+        summary: "Claude 3 时代的最高能力模型，上线价 $15/M 输入、$75/M 输出，2026-01-05 退役。",
+        events: [
+          { date: "2024-03-04", input: 15.00, output: 75.00, modelId: "claude-3-opus-20240229", label: "上线价格", source: "anthropicClaude3" }
+        ],
+        lifecycle: [
+          { date: "2026-01-05", label: "API 退役", source: "anthropicDeprecations", type: "retire" }
+        ]
+      },
+      {
+        id: "claude-3-sonnet",
+        provider: "Claude",
+        family: "Sonnet",
+        name: "Claude 3 Sonnet",
+        status: "retired",
+        retire: "2025-07-21",
+        summary: "Sonnet 线从 Claude 3 开始基本维持 $3/M 输入、$15/M 输出。",
+        events: [
+          { date: "2024-03-04", input: 3.00, output: 15.00, modelId: "claude-3-sonnet-20240229", label: "上线价格", source: "anthropicClaude3" }
+        ],
+        lifecycle: [
+          { date: "2025-07-21", label: "API 退役", source: "anthropicDeprecations", type: "retire" }
+        ]
+      },
+      {
+        id: "claude-3-haiku",
+        provider: "Claude",
+        family: "Haiku",
+        name: "Claude 3 Haiku",
+        status: "retired",
+        retire: "2026-04-20",
+        summary: "Claude 3 的低价模型，上线价 $0.25/M 输入、$1.25/M 输出，2026-04-20 退役。",
+        events: [
+          { date: "2024-03-04", input: 0.25, output: 1.25, modelId: "claude-3-haiku-20240307", label: "上线价格", source: "anthropicClaude3" }
+        ],
+        lifecycle: [
+          { date: "2026-04-20", label: "API 退役", source: "anthropicDeprecations", type: "retire" }
+        ]
+      },
+      {
+        id: "claude-3-5-sonnet",
+        provider: "Claude",
+        family: "Sonnet",
+        name: "Claude 3.5 Sonnet",
+        status: "retired",
+        retire: "2025-10-28",
+        summary: "Claude 3.5 Sonnet 2024-06-20 发布，价格沿用 Sonnet 档位；2024-10-22 更新版价格也不变。",
+        events: [
+          { date: "2024-06-20", input: 3.00, output: 15.00, modelId: "claude-3-5-sonnet-20240620", label: "上线价格", source: "anthropic35Sonnet" },
+          { date: "2024-10-22", input: 3.00, output: 15.00, modelId: "claude-3-5-sonnet-20241022", label: "升级版，价格不变", source: "anthropic35Haiku" }
+        ],
+        lifecycle: [
+          { date: "2025-10-28", label: "API 退役", source: "anthropicDeprecations", type: "retire" }
+        ]
+      },
+      {
+        id: "claude-3-5-haiku",
+        provider: "Claude",
+        family: "Haiku",
+        name: "Claude 3.5 Haiku",
+        status: "retired",
+        retire: "2026-02-19",
+        summary: "3.5 Haiku 先以 $1/M 输入、$5/M 输出公布，2024-12-03 Anthropic 下调到 $0.80/M 输入、$4/M 输出。",
+        events: [
+          { date: "2024-10-22", input: 1.00, output: 5.00, modelId: "claude-3-5-haiku-20241022", label: "初始公开价格", source: "anthropic35Haiku" },
+          { date: "2024-12-03", input: 0.80, output: 4.00, modelId: "claude-3-5-haiku-20241022", label: "价格下调到 $0.80/$4", source: "anthropicHaikuCut" }
+        ],
+        lifecycle: [
+          { date: "2026-02-19", label: "API 退役", source: "anthropicDeprecations", type: "retire" }
+        ]
+      },
+      {
+        id: "claude-3-7-sonnet",
+        provider: "Claude",
+        family: "Sonnet",
+        name: "Claude 3.7 Sonnet",
+        status: "retired",
+        retire: "2026-02-19",
+        summary: "Claude 3.7 Sonnet 引入 extended thinking，但标准和 extended thinking 都维持 $3/M 输入、$15/M 输出。",
+        events: [
+          { date: "2025-02-19", input: 3.00, output: 15.00, modelId: "claude-3-7-sonnet-20250219", label: "上线价格", source: "anthropic37" }
+        ],
+        lifecycle: [
+          { date: "2026-02-19", label: "API 退役", source: "anthropicDeprecations", type: "retire" }
+        ]
+      },
+      {
+        id: "claude-sonnet-4",
+        provider: "Claude",
+        family: "Sonnet",
+        name: "Claude Sonnet 4",
+        status: "deprecated",
+        retire: "2026-06-15",
+        summary: "Claude 4 发布时 Sonnet 仍是 $3/M 输入、$15/M 输出；当前已 deprecated，计划 2026-06-15 退役。",
+        events: [
+          { date: "2025-05-14", input: 3.00, output: 15.00, modelId: "claude-sonnet-4-20250514", label: "上线价格", source: "anthropic4" }
+        ],
+        lifecycle: [
+          { date: "2026-04-14", label: "宣布 deprecated", source: "anthropicDeprecations", type: "note" },
+          { date: "2026-06-15", label: "计划 API 退役", source: "anthropicDeprecations", type: "retire" }
+        ]
+      },
+      {
+        id: "claude-opus-4",
+        provider: "Claude",
+        family: "Opus",
+        name: "Claude Opus 4",
+        status: "deprecated",
+        retire: "2026-06-15",
+        summary: "Opus 4 发布价维持 Opus 老档位 $15/M 输入、$75/M 输出；当前已 deprecated，计划 2026-06-15 退役。",
+        events: [
+          { date: "2025-05-14", input: 15.00, output: 75.00, modelId: "claude-opus-4-20250514", label: "上线价格", source: "anthropic4" }
+        ],
+        lifecycle: [
+          { date: "2026-04-14", label: "宣布 deprecated", source: "anthropicDeprecations", type: "note" },
+          { date: "2026-06-15", label: "计划 API 退役", source: "anthropicDeprecations", type: "retire" }
+        ]
+      },
+      {
+        id: "claude-opus-4-1",
+        provider: "Claude",
+        family: "Opus",
+        name: "Claude Opus 4.1",
+        status: "deprecated",
+        retire: "2026-08-05",
+        summary: "Opus 4.1 沿用 $15/M 输入、$75/M 输出；2026-06-05 宣布 deprecated，计划 2026-08-05 退役。",
+        events: [
+          { date: "2025-08-05", input: 15.00, output: 75.00, modelId: "claude-opus-4-1-20250805", label: "上线价格", source: "anthropicPricing" }
+        ],
+        lifecycle: [
+          { date: "2026-06-05", label: "宣布 deprecated", source: "anthropicDeprecations", type: "note" },
+          { date: "2026-08-05", label: "计划 API 退役", source: "anthropicDeprecations", type: "retire" }
+        ]
+      },
+      {
+        id: "claude-sonnet-4-5",
+        provider: "Claude",
+        family: "Sonnet",
+        name: "Claude Sonnet 4.5",
+        status: "active",
+        summary: "Sonnet 4.5 2025-09-29 上线，价格仍是 $3/M 输入、$15/M 输出。",
+        events: [
+          { date: "2025-09-29", input: 3.00, output: 15.00, modelId: "claude-sonnet-4-5-20250929", label: "上线价格，沿用 Sonnet 4", source: "anthropicSonnet45" }
+        ],
+        lifecycle: [
+          { date: "2026-09-29", label: "不会早于此日退役", source: "anthropicDeprecations", type: "note" }
+        ]
+      },
+      {
+        id: "claude-haiku-4-5",
+        provider: "Claude",
+        family: "Haiku",
+        name: "Claude Haiku 4.5",
+        status: "active",
+        summary: "Haiku 4.5 2025-10-15 上线，价格 $1/M 输入、$5/M 输出。",
+        events: [
+          { date: "2025-10-15", input: 1.00, output: 5.00, modelId: "claude-haiku-4-5", label: "上线价格", source: "anthropicHaiku45" }
+        ],
+        lifecycle: [
+          { date: "2026-10-15", label: "不会早于此日退役", source: "anthropicDeprecations", type: "note" }
+        ]
+      },
+      {
+        id: "claude-opus-4-5",
+        provider: "Claude",
+        family: "Opus",
+        name: "Claude Opus 4.5",
+        status: "active",
+        summary: "Opus 4.5 把 Opus 标准价从老档位 $15/$75 降到 $5/$25，是 Claude 历史里最明显的一次高端线降价。",
+        events: [
+          { date: "2025-11-24", input: 5.00, output: 25.00, modelId: "claude-opus-4-5-20251101", label: "上线价格", source: "anthropicPricing" }
+        ],
+        lifecycle: [
+          { date: "2026-11-24", label: "不会早于此日退役", source: "anthropicDeprecations", type: "note" }
+        ]
+      },
+      {
+        id: "claude-opus-4-6",
+        provider: "Claude",
+        family: "Opus",
+        name: "Claude Opus 4.6",
+        status: "active",
+        summary: "Opus 4.6 沿用 Opus 4.5 的 $5/M 输入、$25/M 输出。",
+        events: [
+          { date: "2026-02-05", input: 5.00, output: 25.00, modelId: "claude-opus-4-6", label: "上线价格，沿用 Opus 4.5", source: "anthropicOpus46" }
+        ],
+        lifecycle: [
+          { date: "2027-02-05", label: "不会早于此日退役", source: "anthropicDeprecations", type: "note" }
+        ]
+      },
+      {
+        id: "claude-sonnet-4-6",
+        provider: "Claude",
+        family: "Sonnet",
+        name: "Claude Sonnet 4.6",
+        status: "active",
+        summary: "Sonnet 4.6 继续沿用 $3/M 输入、$15/M 输出。",
+        events: [
+          { date: "2026-02-17", input: 3.00, output: 15.00, modelId: "claude-sonnet-4-6", label: "上线价格，沿用 Sonnet 4.5", source: "anthropicSonnet46" }
+        ],
+        lifecycle: [
+          { date: "2027-02-17", label: "不会早于此日退役", source: "anthropicDeprecations", type: "note" }
+        ]
+      },
+      {
+        id: "claude-opus-4-7",
+        provider: "Claude",
+        family: "Opus",
+        name: "Claude Opus 4.7",
+        status: "active",
+        summary: "Opus 4.7 沿用 $5/M 输入、$25/M 输出。",
+        events: [
+          { date: "2026-04-16", input: 5.00, output: 25.00, modelId: "claude-opus-4-7", label: "上线价格，沿用 Opus 4.6", source: "anthropicOpus47" }
+        ],
+        lifecycle: [
+          { date: "2027-04-16", label: "不会早于此日退役", source: "anthropicDeprecations", type: "note" }
+        ]
+      },
+      {
+        id: "claude-opus-4-8",
+        provider: "Claude",
+        family: "Opus",
+        name: "Claude Opus 4.8",
+        status: "active",
+        summary: "Opus 4.8 是当前 Opus 线，普通模式 $5/M 输入、$25/M 输出；fast mode 另计。",
+        events: [
+          { date: "2026-05-28", input: 5.00, output: 25.00, modelId: "claude-opus-4-8", label: "上线价格，沿用 Opus 4.7", source: "anthropicOpus48" }
+        ],
+        lifecycle: [
+          { date: "2027-05-28", label: "不会早于此日退役", source: "anthropicDeprecations", type: "note" }
+        ]
+      },
+      {
+        id: "claude-fable-5",
+        provider: "Claude",
+        family: "Fable/Mythos",
+        name: "Claude Fable 5",
+        status: "active",
+        summary: "Anthropic 2026-06-09 推出的新一代模型线，当前价格 $10/M 输入、$50/M 输出。",
+        events: [
+          { date: "2026-06-09", input: 10.00, output: 50.00, modelId: "claude-fable-5", label: "上线价格", source: "anthropicPricing" }
+        ],
+        lifecycle: []
+      }
+    ];
+
+    const colors = {
+      "GPT-3.5": "#087f8c",
+      "GPT-4": "#2563eb",
+      "GPT-4o": "#16a34a",
+      "GPT-4.5": "#7c3aed",
+      "GPT-4.1": "#0891b2",
+      "GPT-5": "#dc2626",
+      "o-series": "#6d28d9",
+      "Claude 1/2": "#a16207",
+      "Opus": "#c2410c",
+      "Sonnet": "#b45309",
+      "Haiku": "#4d7c0f",
+      "Fable/Mythos": "#be123c"
+    };
+
+    const state = {
+      provider: "all",
+      metric: "input",
+      view: "price",
+      tier: "flagship",
+      search: "",
+      selected: "gpt-4o"
+    };
+
+    const $ = (sel) => document.querySelector(sel);
+    const $$ = (sel) => Array.from(document.querySelectorAll(sel));
+    const parseDate = (d) => new Date(d + "T00:00:00Z");
+    const fmtDate = (d) => d.replaceAll("-", ".");
+    const money = (v) => "$" + (v >= 10 ? v.toFixed(0) : v >= 1 ? v.toFixed(2).replace(/\.00$/, "") : v.toFixed(2)) + "/M";
+    const priceOf = (e) => state.metric === "input" ? e.input : state.metric === "output" ? e.output : e.input + e.output;
+    const metricName = () => state.metric === "input" ? "输入价" : state.metric === "output" ? "输出价" : "输入+输出价";
+    const modelColor = (m) => colors[m.family] || (m.provider === "OpenAI" ? "var(--openai)" : "var(--claude)");
+    let frontierPointCache = [];
+    let tierPointCache = [];
+
+    function statusLabel(model) {
+      if (model.status === "active") return "仍在";
+      if (model.status === "retired") return "已退役";
+      return "将退役";
+    }
+
+    function statusClass(model) {
+      if (model.status === "active") return "active";
+      if (model.status === "retired") return "retired";
+      return "deprecated";
+    }
+
+    function endDate(model) {
+      if (model.retire) return model.retire;
+      const future = (model.lifecycle || []).find(d => d.type === "retire");
+      return future ? future.date : CURRENT_DATE;
+    }
+
+    function filteredModels() {
+      const q = state.search.trim().toLowerCase();
+      return models.filter(m => {
+        const providerOk = state.provider === "all" || m.provider === state.provider;
+        const hay = [m.name, m.provider, m.family, m.status, m.summary, ...m.events.map(e => e.modelId)].join(" ").toLowerCase();
+        return providerOk && (!q || hay.includes(q));
+      });
+    }
+
+    function pointFromModel(modelId, eventIndex, short, note, showLabel = true, dashedFromPrev = false) {
+      const model = models.find(m => m.id === modelId);
+      const event = model.events[eventIndex];
+      return {
+        modelId: model.id,
+        modelName: model.name,
+        provider: model.provider,
+        family: model.family,
+        short,
+        note,
+        showLabel,
+        dashedFromPrev,
+        date: event.date,
+        input: event.input,
+        output: event.output,
+        apiModelId: event.modelId,
+        label: event.label,
+        source: event.source
+      };
+    }
+
+    function frontierTracks(options = {}) {
+      const applyProvider = options.applyProvider !== false;
+      const applySearch = options.applySearch !== false;
+      const q = applySearch ? state.search.trim().toLowerCase() : "";
+      const tracks = [
+        {
+          id: "openai-frontier",
+          provider: "OpenAI",
+          name: "OpenAI 主力旗舰线",
+          shortName: "OpenAI 主力",
+          color: "#2563eb",
+          note: "GPT-4 到 GPT-4.1 下行；GPT-5 后再向上分层。",
+          points: [
+            pointFromModel("gpt-4", 0, "GPT-4", "早期旗舰基准"),
+            pointFromModel("gpt-4-turbo", 0, "GPT-4 Turbo", "128K 旗舰降价"),
+            pointFromModel("gpt-4o", 0, "GPT-4o", "多模态主力半价"),
+            pointFromModel("gpt-4o", 1, "4o 08-06", "同代 snapshot 再降价"),
+            pointFromModel("gpt-4-1", 0, "GPT-4.1", "GPT-4 时代低点"),
+            pointFromModel("gpt-5", 0, "GPT-5", "新一代主模型，输出价回到 $10/M"),
+            pointFromModel("gpt-5-2", 0, "GPT-5.2", "GPT-5 系列开始向上分层", false),
+            pointFromModel("gpt-5-4", 0, "GPT-5.4", "更高能力档位", false),
+            pointFromModel("gpt-5-5", 0, "GPT-5.5", "当前主旗舰价位")
+          ]
+        },
+        {
+          id: "claude-frontier",
+          provider: "Claude",
+          name: "Claude 高端 / Opus线",
+          shortName: "Claude 高端",
+          color: "#b45309",
+          note: "Claude 3.7 属于 Sonnet 线；这里按 Opus 和新高端线画。",
+          points: [
+            pointFromModel("claude-3-opus", 0, "Claude 3 Opus", "Opus 老档位"),
+            pointFromModel("claude-opus-4", 0, "Opus 4", "仍沿用老 Opus 价位"),
+            pointFromModel("claude-opus-4-1", 0, "Opus 4.1", "仍沿用老 Opus 价位", false),
+            pointFromModel("claude-opus-4-5", 0, "Opus 4.5", "Opus 标准价从 $15/$75 降到 $5/$25"),
+            pointFromModel("claude-opus-4-6", 0, "Opus 4.6", "沿用 $5/$25", false),
+            pointFromModel("claude-opus-4-7", 0, "Opus 4.7", "沿用 $5/$25", false),
+            pointFromModel("claude-opus-4-8", 0, "Opus 4.8", "当前 Opus 标准价"),
+            pointFromModel("claude-fable-5", 0, "Fable 5", "新高端线，价格回升但仍低于 Opus 老档位", true, true)
+          ]
+        }
+      ];
+
+      return tracks
+        .filter(track => !applyProvider || state.provider === "all" || track.provider === state.provider)
+        .map(track => {
+          const points = q
+            ? track.points.filter(point => [track.name, point.modelName, point.short, point.note, point.apiModelId].join(" ").toLowerCase().includes(q))
+            : track.points;
+          return { ...track, points };
+        })
+        .filter(track => track.points.length);
+    }
+
+    function tierDefinitions() {
+      return {
+        flagship: {
+          title: "旗舰 / 高端模型价格复盘",
+          note: "看每家最主要的头部能力线。OpenAI 侧包含 GPT-4 到 GPT-5.5，Claude 侧包含 Opus 到 Fable；这是跨代同档位，不是同一个模型自身调价。",
+          tracks: [
+            {
+              provider: "OpenAI",
+              name: "OpenAI 旗舰",
+              color: "#2563eb",
+              points: [
+                pointFromModel("gpt-4", 0, "GPT-4", "早期旗舰起点"),
+                pointFromModel("gpt-4-turbo", 0, "GPT-4 Turbo", "旗舰降价到 Turbo 档"),
+                pointFromModel("gpt-4o", 0, "GPT-4o", "主力旗舰半价"),
+                pointFromModel("gpt-4o", 1, "4o 08-06", "同代 snapshot 再降价"),
+                pointFromModel("gpt-4-1", 0, "GPT-4.1", "GPT-4 时代价格低点"),
+                pointFromModel("gpt-5", 0, "GPT-5", "新一代主模型"),
+                pointFromModel("gpt-5-2", 0, "GPT-5.2", "GPT-5 系列上移", false),
+                pointFromModel("gpt-5-4", 0, "GPT-5.4", "更高能力档位", false),
+                pointFromModel("gpt-5-5", 0, "GPT-5.5", "当前主旗舰")
+              ]
+            },
+            {
+              provider: "Claude",
+              name: "Claude 高端",
+              color: "#b45309",
+              points: [
+                pointFromModel("claude-3-opus", 0, "Claude 3 Opus", "Opus 老档位"),
+                pointFromModel("claude-opus-4", 0, "Opus 4", "沿用老 Opus 档"),
+                pointFromModel("claude-opus-4-1", 0, "Opus 4.1", "沿用老 Opus 档", false),
+                pointFromModel("claude-opus-4-5", 0, "Opus 4.5", "Opus 档位降价"),
+                pointFromModel("claude-opus-4-8", 0, "Opus 4.8", "当前 Opus 价位"),
+                pointFromModel("claude-fable-5", 0, "Fable 5", "新高端线回升")
+              ]
+            }
+          ]
+        },
+        workhorse: {
+          title: "主力通用模型价格复盘",
+          note: "看日常 API 和 agent 工作负载最容易大规模使用的通用档位。Claude 侧主要是 Sonnet，OpenAI 侧主要是 GPT-4o / GPT-4.1 / GPT-5 主模型。",
+          tracks: [
+            {
+              provider: "OpenAI",
+              name: "OpenAI 主力",
+              color: "#0f766e",
+              points: [
+                pointFromModel("gpt-3-5-turbo", 0, "GPT-3.5", "早期低价 chat 起点"),
+                pointFromModel("gpt-3-5-turbo", 3, "3.5 0125", "GPT-3.5 最后一次大降价"),
+                pointFromModel("gpt-4o", 0, "GPT-4o", "4o 成为主力"),
+                pointFromModel("gpt-4o", 1, "4o 08-06", "4o snapshot 降价"),
+                pointFromModel("gpt-4-1", 0, "GPT-4.1", "主力非推理模型低点"),
+                pointFromModel("gpt-5", 0, "GPT-5", "新主模型")
+              ]
+            },
+            {
+              provider: "Claude",
+              name: "Claude Sonnet",
+              color: "#b45309",
+              points: [
+                pointFromModel("claude-3-sonnet", 0, "Claude 3 Sonnet", "Sonnet 档位起点"),
+                pointFromModel("claude-3-5-sonnet", 0, "3.5 Sonnet", "Sonnet 继续同价"),
+                pointFromModel("claude-3-7-sonnet", 0, "3.7 Sonnet", "extended thinking 同价"),
+                pointFromModel("claude-sonnet-4", 0, "Sonnet 4", "Claude 4 主力档"),
+                pointFromModel("claude-sonnet-4-5", 0, "Sonnet 4.5", "仍维持 Sonnet 档"),
+                pointFromModel("claude-sonnet-4-6", 0, "Sonnet 4.6", "仍维持 Sonnet 档")
+              ]
+            }
+          ]
+        },
+        budget: {
+          title: "轻量 / 低价模型价格复盘",
+          note: "看低成本、高吞吐、适合大规模调用的模型。这个档位最能体现单位 token 成本快速下降。",
+          tracks: [
+            {
+              provider: "OpenAI",
+              name: "OpenAI 轻量",
+              color: "#16a34a",
+              points: [
+                pointFromModel("gpt-4o-mini", 0, "4o mini", "低价小模型起点"),
+                pointFromModel("gpt-4-1-mini", 0, "4.1 mini", "4.1 低价档"),
+                pointFromModel("gpt-4-1-nano", 0, "4.1 nano", "极低价档"),
+                pointFromModel("gpt-5-mini", 0, "GPT-5 mini", "GPT-5 小模型"),
+                pointFromModel("gpt-5-nano", 0, "GPT-5 nano", "GPT-5 极低价档"),
+                pointFromModel("gpt-5-4-mini", 0, "5.4 mini", "小模型价格上移", false)
+              ]
+            },
+            {
+              provider: "Claude",
+              name: "Claude 轻量",
+              color: "#4d7c0f",
+              points: [
+                pointFromModel("claude-instant", 0, "Instant", "早期低延迟模型"),
+                pointFromModel("claude-3-haiku", 0, "3 Haiku", "Haiku 低价起点"),
+                pointFromModel("claude-3-5-haiku", 0, "3.5 Haiku", "初始公开价上移"),
+                pointFromModel("claude-3-5-haiku", 1, "3.5 Haiku cut", "3.5 Haiku 后续降价"),
+                pointFromModel("claude-haiku-4-5", 0, "Haiku 4.5", "当前 Haiku 档")
+              ]
+            }
+          ]
+        },
+        premium: {
+          title: "高价 / Pro 档位价格复盘",
+          note: "看价格明显高于主力模型的高价档，包括长上下文、preview、Pro 或新高端线。这个档位更像稀缺能力和产能溢价。",
+          tracks: [
+            {
+              provider: "OpenAI",
+              name: "OpenAI 高价档",
+              color: "#7c3aed",
+              points: [
+                pointFromModel("gpt-4-32k", 0, "GPT-4 32K", "早期长上下文高价"),
+                pointFromModel("gpt-4-5-preview", 0, "GPT-4.5", "高价 preview"),
+                pointFromModel("gpt-5-5-pro", 0, "5.5 Pro", "当前 Pro 高价档")
+              ]
+            },
+            {
+              provider: "Claude",
+              name: "Claude 高价档",
+              color: "#be123c",
+              points: [
+                pointFromModel("claude-3-opus", 0, "Claude 3 Opus", "早期 Opus 高价"),
+                pointFromModel("claude-opus-4", 0, "Opus 4", "老 Opus 高价"),
+                pointFromModel("claude-opus-4-1", 0, "Opus 4.1", "老 Opus 高价", false),
+                pointFromModel("claude-fable-5", 0, "Fable 5", "新高端线")
+              ]
+            }
+          ]
+        }
+      };
+    }
+
+    function tierTracks(options = {}) {
+      const def = tierDefinitions()[state.tier] || tierDefinitions().flagship;
+      const applyProvider = options.applyProvider !== false;
+      const applySearch = options.applySearch !== false;
+      const q = applySearch ? state.search.trim().toLowerCase() : "";
+      const tracks = def.tracks
+        .filter(track => !applyProvider || state.provider === "all" || track.provider === state.provider)
+        .map(track => {
+          const points = q
+            ? track.points.filter(point => [track.name, point.modelName, point.short, point.note, point.apiModelId].join(" ").toLowerCase().includes(q))
+            : track.points;
+          return { ...track, points };
+        })
+        .filter(track => track.points.length);
+      return { def, tracks };
+    }
+
+    function updateControls() {
+      $$(".toolbar .group").forEach(group => {
+        const key = group.dataset.control;
+        group.querySelectorAll("button").forEach(btn => {
+          btn.classList.toggle("active", state[key] === btn.dataset.value);
+        });
+      });
+      $("#search").value = state.search;
+    }
+
+    function renderList(data) {
+      $("#modelCount").textContent = `${data.length} 个`;
+      const list = $("#modelList");
+      list.innerHTML = "";
+      data.forEach(model => {
+        const last = model.events[model.events.length - 1];
+        const btn = document.createElement("button");
+        btn.className = "model-item" + (state.selected === model.id ? " selected" : "");
+        btn.innerHTML = `
+          <div class="model-row">
+            <span class="model-name"><span class="dot" style="background:${modelColor(model)}"></span><span>${model.name}</span></span>
+            <span class="pill ${statusClass(model)}">${statusLabel(model)}</span>
+          </div>
+          <div class="model-meta">${model.provider} · ${model.family} · 当前/末次 ${money(last.input)} 输入，${money(last.output)} 输出</div>
+        `;
+        btn.addEventListener("click", () => {
+          state.selected = model.id;
+          render();
+        });
+        list.appendChild(btn);
+      });
+    }
+
+    function renderStats(data) {
+      if (state.view === "frontier") {
+        renderFrontierStats();
+        return;
+      }
+
+      const eventCount = data.reduce((sum, m) => sum + m.events.length, 0);
+      const activeCount = data.filter(m => m.status === "active").length;
+      let biggestDrop = null;
+      data.forEach(model => {
+        model.events.forEach((event, index) => {
+          if (index === 0) return;
+          const prev = model.events[index - 1];
+          const prevPrice = priceOf(prev);
+          const price = priceOf(event);
+          if (price < prevPrice) {
+            const pct = (prevPrice - price) / prevPrice;
+            if (!biggestDrop || pct > biggestDrop.pct) biggestDrop = { model, event, pct };
+          }
+        });
+      });
+
+      $("#stats").innerHTML = `
+        <div class="stat"><b>${eventCount}</b><span>价格节点</span></div>
+        <div class="stat"><b>${activeCount}</b><span>当前仍在服务</span></div>
+        <div class="stat"><b>${biggestDrop ? Math.round(biggestDrop.pct * 100) + "%" : "—"}</b><span>${biggestDrop ? biggestDrop.model.name + " 最大降幅" : "无降价"}</span></div>
+      `;
+    }
+
+    function deltaText(from, to) {
+      const fromPrice = priceOf(from);
+      const toPrice = priceOf(to);
+      const pct = ((toPrice - fromPrice) / fromPrice) * 100;
+      if (Math.abs(pct) < 0.5) return "持平";
+      return pct < 0 ? "降 " + Math.abs(pct).toFixed(0) + "%" : "升 " + pct.toFixed(0) + "%";
+    }
+
+    function renderFrontierStats() {
+      const tracks = frontierTracks({ applySearch: false });
+      const nodeCount = tracks.reduce((sum, track) => sum + track.points.length, 0);
+      const cards = [`<div class="stat"><b>${nodeCount}</b><span>头部价格节点</span></div>`];
+
+      tracks.forEach(track => {
+        const start = track.points[0];
+        const low = track.points.reduce((best, point) => priceOf(point) < priceOf(best) ? point : best, start);
+        const latest = track.points[track.points.length - 1];
+        cards.push(`<div class="stat"><b>${deltaText(start, low)}</b><span>${track.shortName} 低点：${money(priceOf(start))}→${money(priceOf(low))}</span></div>`);
+        cards.push(`<div class="stat"><b>${deltaText(start, latest)}</b><span>${track.shortName} 最新：${money(priceOf(start))}→${money(priceOf(latest))}</span></div>`);
+      });
+
+      $("#stats").innerHTML = cards.join("");
+    }
+
+    function renderChart(data) {
+      const tracks = state.view === "frontier" ? frontierTracks() : [];
+      if (state.view === "price") {
+        $("#chartTitle").textContent = `${metricName()}历史曲线`;
+        $("#chartNote").textContent = "纵轴使用对数刻度。鼠标悬停看具体价格，点击点或左侧模型看完整节点。";
+      } else if (state.view === "timeline") {
+        $("#chartTitle").textContent = "模型上线、更新与退役时间轴";
+        $("#chartNote").textContent = "横线从首个价格节点延伸到退役日或统计日；红色短线代表退役或计划退役节点。";
+      } else {
+        $("#chartTitle").textContent = `${metricName()}头部模型趋势`;
+        $("#chartNote").textContent = "这是跨代高端线视角：Claude 3.7 属于 Sonnet 线，未归入 Opus 线；长期看 token 单价明显下行，但 2026 年以后高端档也出现回升和分层。";
+      }
+
+      const svg = $("#chart");
+      svg.innerHTML = "";
+      const rect = svg.getBoundingClientRect();
+      const width = Math.max(720, rect.width || 900);
+      const height = 560;
+      svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
+      if ((state.view === "frontier" && !tracks.length) || (state.view !== "frontier" && !data.length)) {
+        svg.innerHTML = `<foreignObject x="0" y="0" width="${width}" height="${height}"><div class="empty">没有匹配模型</div></foreignObject>`;
+        return;
+      }
+
+      const margin = state.view === "price"
+        ? { top: 20, right: 24, bottom: 44, left: 72 }
+        : state.view === "timeline"
+          ? { top: 18, right: 24, bottom: 44, left: 146 }
+          : { top: 28, right: 34, bottom: 48, left: 78 };
+      const plotW = width - margin.left - margin.right;
+      const plotH = height - margin.top - margin.bottom;
+
+      const allDates = [];
+      if (state.view === "frontier") {
+        tracks.forEach(track => track.points.forEach(point => allDates.push(parseDate(point.date))));
+      } else {
+        data.forEach(m => {
+          m.events.forEach(e => allDates.push(parseDate(e.date)));
+          allDates.push(parseDate(endDate(m)));
+          (m.lifecycle || []).forEach(e => allDates.push(parseDate(e.date)));
+        });
+      }
+      const minD = new Date(Math.min(...allDates.map(d => d.getTime()), parseDate("2023-03-01").getTime()));
+      const maxD = new Date(Math.max(...allDates.map(d => d.getTime()), parseDate("2026-10-23").getTime()));
+      const x = (d) => margin.left + ((parseDate(d) - minD) / (maxD - minD)) * plotW;
+      const yearTicks = ["2023-01-01", "2024-01-01", "2025-01-01", "2026-01-01", "2027-01-01"].filter(d => parseDate(d) >= minD && parseDate(d) <= maxD);
+
+      yearTicks.forEach(d => {
+        const gx = x(d);
+        svg.insertAdjacentHTML("beforeend", `<line class="grid" x1="${gx}" x2="${gx}" y1="${margin.top}" y2="${height - margin.bottom}"></line><text x="${gx + 4}" y="${height - 17}" fill="#667085" font-size="11">${d.slice(0,4)}</text>`);
+      });
+
+      if (state.view === "price") {
+        renderPrice(svg, data, margin, plotW, plotH, x);
+      } else if (state.view === "timeline") {
+        renderTimeline(svg, data, margin, plotW, plotH, x);
+      } else {
+        renderFrontier(svg, tracks, margin, plotW, plotH, x);
+      }
+    }
+
+    function renderPrice(svg, data, margin, plotW, plotH, x) {
+      const yMin = 0.04;
+      const yMax = 220;
+      const logMin = Math.log10(yMin);
+      const logMax = Math.log10(yMax);
+      const y = (v) => margin.top + (1 - ((Math.log10(Math.max(v, yMin)) - logMin) / (logMax - logMin))) * plotH;
+      const ticks = [0.05, 0.1, 0.25, 0.5, 1, 2, 5, 10, 25, 50, 100, 200];
+      ticks.forEach(t => {
+        const gy = y(t);
+        svg.insertAdjacentHTML("beforeend", `<line class="grid" x1="${margin.left}" x2="${margin.left + plotW}" y1="${gy}" y2="${gy}"></line><text x="${margin.left - 10}" y="${gy + 4}" text-anchor="end" fill="#667085" font-size="11">${money(t)}</text>`);
+      });
+      svg.insertAdjacentHTML("beforeend", `<line class="axis-line" x1="${margin.left}" x2="${margin.left + plotW}" y1="${margin.top + plotH}" y2="${margin.top + plotH}"></line><line class="axis-line" x1="${margin.left}" x2="${margin.left}" y1="${margin.top}" y2="${margin.top + plotH}"></line>`);
+
+      data.forEach(model => {
+        const color = modelColor(model);
+        const selected = state.selected === model.id;
+        const evs = [...model.events].sort((a,b) => parseDate(a.date) - parseDate(b.date));
+        let d = "";
+        evs.forEach((event, i) => {
+          const px = x(event.date);
+          const py = y(priceOf(event));
+          if (i === 0) d += `M ${px} ${py}`;
+          else d += ` L ${px} ${y(priceOf(evs[i - 1]))} L ${px} ${py}`;
+        });
+        const last = evs[evs.length - 1];
+        d += ` L ${x(endDate(model))} ${y(priceOf(last))}`;
+        svg.insertAdjacentHTML("beforeend", `<path class="series ${selected ? "selected" : "dim"}" d="${d}" stroke="${color}" stroke-width="${selected ? 3.5 : 2}"></path>`);
+        evs.forEach((event, index) => {
+          const cls = selected ? "selected" : "dim";
+          svg.insertAdjacentHTML("beforeend", `<circle class="point ${cls}" data-model="${model.id}" data-event="${index}" cx="${x(event.date)}" cy="${y(priceOf(event))}" r="${selected ? 5 : 4}" fill="${color}"></circle>`);
+        });
+      });
+      bindPointEvents();
+    }
+
+    function renderTimeline(svg, data, margin, plotW, plotH, x) {
+      const rowH = Math.max(18, Math.min(34, plotH / data.length));
+      data.forEach((model, index) => {
+        const y = margin.top + index * rowH + rowH * 0.55;
+        const selected = state.selected === model.id;
+        const color = modelColor(model);
+        const start = model.events[0].date;
+        const end = endDate(model);
+        svg.insertAdjacentHTML("beforeend", `<text class="lane-label" x="${margin.left - 10}" y="${y + 4}" text-anchor="end">${model.name}</text>`);
+        svg.insertAdjacentHTML("beforeend", `<line class="lane-line ${selected ? "selected" : ""}" x1="${x(start)}" x2="${x(end)}" y1="${y}" y2="${y}" stroke="${color}"></line>`);
+        model.events.forEach((event, eventIndex) => {
+          svg.insertAdjacentHTML("beforeend", `<circle class="point ${selected ? "selected" : "dim"}" data-model="${model.id}" data-event="${eventIndex}" cx="${x(event.date)}" cy="${y}" r="${selected ? 5 : 4}" fill="${color}"></circle>`);
+        });
+        (model.lifecycle || []).filter(e => e.type === "retire").forEach(life => {
+          svg.insertAdjacentHTML("beforeend", `<line class="retire-mark" x1="${x(life.date)}" x2="${x(life.date)}" y1="${y - 9}" y2="${y + 9}"></line>`);
+        });
+      });
+      svg.insertAdjacentHTML("beforeend", `<line class="axis-line" x1="${margin.left}" x2="${margin.left + plotW}" y1="${margin.top + plotH}" y2="${margin.top + plotH}"></line>`);
+      bindPointEvents();
+    }
+
+    function renderFrontier(svg, tracks, margin, plotW, plotH, x) {
+      frontierPointCache = [];
+      const values = tracks.flatMap(track => track.points.map(point => priceOf(point)));
+      const minValue = Math.max(0.5, Math.min(...values) * 0.72);
+      const maxValue = Math.max(...values) * 1.28;
+      const logMin = Math.log10(minValue);
+      const logMax = Math.log10(maxValue);
+      const y = (v) => margin.top + (1 - ((Math.log10(Math.max(v, minValue)) - logMin) / (logMax - logMin))) * plotH;
+      const ticks = [1, 2, 5, 8, 10, 15, 25, 30, 50, 75, 100, 150, 200].filter(t => t >= minValue && t <= maxValue);
+
+      ticks.forEach(t => {
+        const gy = y(t);
+        svg.insertAdjacentHTML("beforeend", `<line class="grid" x1="${margin.left}" x2="${margin.left + plotW}" y1="${gy}" y2="${gy}"></line><text x="${margin.left - 10}" y="${gy + 4}" text-anchor="end" fill="#667085" font-size="11">${money(t)}</text>`);
+      });
+
+      svg.insertAdjacentHTML("beforeend", `<line class="axis-line" x1="${margin.left}" x2="${margin.left + plotW}" y1="${margin.top + plotH}" y2="${margin.top + plotH}"></line><line class="axis-line" x1="${margin.left}" x2="${margin.left}" y1="${margin.top}" y2="${margin.top + plotH}"></line>`);
+
+      const bandHeight = 42;
+      tracks.forEach((track, trackIndex) => {
+        const bandY = margin.top + 6 + trackIndex * (bandHeight + 7);
+        svg.insertAdjacentHTML("beforeend", `<rect class="frontier-band" x="${margin.left + 10}" y="${bandY}" width="${Math.min(460, plotW - 20)}" height="${bandHeight}" rx="7"></rect>`);
+        svg.insertAdjacentHTML("beforeend", `<text class="frontier-label" x="${margin.left + 24}" y="${bandY + 17}" fill="${track.color}">${track.name}</text>`);
+        svg.insertAdjacentHTML("beforeend", `<text class="frontier-note" x="${margin.left + 24}" y="${bandY + 34}">${track.note}</text>`);
+      });
+
+      tracks.forEach(track => {
+        const points = [...track.points].sort((a, b) => parseDate(a.date) - parseDate(b.date));
+        points.forEach((point, index) => {
+          if (index === 0) return;
+          const prev = points[index - 1];
+          const dashed = point.dashedFromPrev ? `stroke-dasharray="7 6"` : "";
+          svg.insertAdjacentHTML("beforeend", `<line class="frontier-line" ${dashed} x1="${x(prev.date)}" x2="${x(point.date)}" y1="${y(priceOf(prev))}" y2="${y(priceOf(point))}" stroke="${track.color}"></line>`);
+        });
+
+        points.forEach((point, index) => {
+          const cacheIndex = frontierPointCache.push({ track, point }) - 1;
+          const px = x(point.date);
+          const py = y(priceOf(point));
+          const selected = state.selected === point.modelId;
+          svg.insertAdjacentHTML("beforeend", `<circle class="frontier-point ${selected ? "selected" : ""}" data-index="${cacheIndex}" cx="${px}" cy="${py}" r="${selected ? 6 : 5}" fill="${track.color}"></circle>`);
+          if (point.showLabel) {
+            const above = index % 2 === 0;
+            const labelY = above ? py - 12 : py + 20;
+            svg.insertAdjacentHTML("beforeend", `<text class="frontier-label" x="${px + 8}" y="${labelY}">${point.short}</text>`);
+            svg.insertAdjacentHTML("beforeend", `<text class="frontier-note" x="${px + 8}" y="${labelY + 14}">${money(priceOf(point))}</text>`);
+          }
+        });
+      });
+
+      bindFrontierPointEvents();
+    }
+
+    function bindPointEvents() {
+      const tooltip = $("#tooltip");
+      $$("#chart .point").forEach(point => {
+        point.addEventListener("mouseenter", (ev) => {
+          const model = models.find(m => m.id === point.dataset.model);
+          const event = model.events[Number(point.dataset.event)];
+          const source = sources[event.source];
+          tooltip.innerHTML = `
+            <b>${model.name}</b><br>
+            ${fmtDate(event.date)} · ${event.modelId}<br>
+            输入 ${money(event.input)}，输出 ${money(event.output)}<br>
+            <span class="muted">${event.label}</span><br>
+            <span class="muted">来源：${source ? source.label : event.source}</span>
+          `;
+          tooltip.classList.add("visible");
+          positionTooltip(ev, tooltip);
+        });
+        point.addEventListener("mousemove", (ev) => positionTooltip(ev, tooltip));
+        point.addEventListener("mouseleave", () => tooltip.classList.remove("visible"));
+        point.addEventListener("click", () => {
+          state.selected = point.dataset.model;
+          render();
+        });
+      });
+    }
+
+    function bindFrontierPointEvents() {
+      const tooltip = $("#tooltip");
+      $$("#chart .frontier-point").forEach(node => {
+        node.addEventListener("mouseenter", (ev) => {
+          const cached = frontierPointCache[Number(node.dataset.index)];
+          const point = cached.point;
+          const source = sources[point.source];
+          tooltip.innerHTML = `
+            <b>${point.modelName}</b><br>
+            ${fmtDate(point.date)} · ${point.apiModelId}<br>
+            输入 ${money(point.input)}，输出 ${money(point.output)}<br>
+            <span class="muted">${point.note}</span><br>
+            <span class="muted">来源：${source ? source.label : point.source}</span>
+          `;
+          tooltip.classList.add("visible");
+          positionTooltip(ev, tooltip);
+        });
+        node.addEventListener("mousemove", (ev) => positionTooltip(ev, tooltip));
+        node.addEventListener("mouseleave", () => tooltip.classList.remove("visible"));
+        node.addEventListener("click", () => {
+          const cached = frontierPointCache[Number(node.dataset.index)];
+          state.selected = cached.point.modelId;
+          render();
+        });
+      });
+    }
+
+    function positionTooltip(ev, tooltip) {
+      const pad = 14;
+      const tw = tooltip.offsetWidth || 300;
+      const th = tooltip.offsetHeight || 120;
+      let left = ev.clientX + pad;
+      let top = ev.clientY + pad;
+      if (left + tw > window.innerWidth - 10) left = ev.clientX - tw - pad;
+      if (top + th > window.innerHeight - 10) top = ev.clientY - th - pad;
+      tooltip.style.transform = `translate(${left}px, ${top}px)`;
+    }
+
+    function renderTierPanel() {
+      const { def, tracks } = tierTracks();
+      $("#tierTitle").textContent = def.title;
+      $("#tierNote").textContent = def.note;
+      $$("#tierControls button").forEach(btn => {
+        btn.classList.toggle("active", state.tier === btn.dataset.value);
+      });
+      renderTierChart(tracks);
+      renderTierInsight(tracks);
+    }
+
+    function renderTierInsight(tracks) {
+      if (!tracks.length) {
+        $("#tierInsight").innerHTML = `<div class="tier-card"><b>没有匹配档位</b><span>可以清空搜索词，或切换 provider / 档位。</span></div>`;
+        return;
+      }
+
+      const cards = [];
+      tracks.forEach(track => {
+        const points = [...track.points].sort((a, b) => parseDate(a.date) - parseDate(b.date));
+        const start = points[0];
+        const latest = points[points.length - 1];
+        const low = points.reduce((best, point) => priceOf(point) < priceOf(best) ? point : best, start);
+        const high = points.reduce((best, point) => priceOf(point) > priceOf(best) ? point : best, start);
+        cards.push(`
+          <div class="tier-card">
+            <span>${track.name}</span>
+            <b>${money(priceOf(start))} → ${money(priceOf(latest))}</b>
+            <div>起点 ${start.short}，最新 ${latest.short}，${deltaText(start, latest)}。</div>
+            <div>低点 ${low.short}：${money(priceOf(low))}；高点 ${high.short}：${money(priceOf(high))}。</div>
+          </div>
+        `);
+      });
+
+      const allPoints = tracks.flatMap(track => track.points);
+      const peak = allPoints.reduce((best, point) => priceOf(point) > priceOf(best) ? point : best, allPoints[0]);
+      const trough = allPoints.reduce((best, point) => priceOf(point) < priceOf(best) ? point : best, allPoints[0]);
+      cards.push(`
+        <div class="tier-card">
+          <span>这个档位的价格区间</span>
+          <b>${money(priceOf(trough))} - ${money(priceOf(peak))}</b>
+          <div>最低点是 ${trough.short}，最高点是 ${peak.short}。点击图上的点会同步到下面的模型详情。</div>
+        </div>
+      `);
+      $("#tierInsight").innerHTML = cards.join("");
+    }
+
+    function renderTierChart(tracks) {
+      tierPointCache = [];
+      const svg = $("#tierChart");
+      svg.innerHTML = "";
+      const rect = svg.getBoundingClientRect();
+      const width = Math.max(680, rect.width || 900);
+      const height = 360;
+      svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
+      if (!tracks.length) {
+        svg.innerHTML = `<foreignObject x="0" y="0" width="${width}" height="${height}"><div class="empty">没有匹配档位</div></foreignObject>`;
+        return;
+      }
+
+      const margin = { top: 24, right: 28, bottom: 42, left: 68 };
+      const plotW = width - margin.left - margin.right;
+      const plotH = height - margin.top - margin.bottom;
+      const allPoints = tracks.flatMap(track => track.points);
+      const values = allPoints.map(point => priceOf(point));
+      const minValue = Math.max(0.03, Math.min(...values) * 0.68);
+      const maxValue = Math.max(...values) * 1.32;
+      const logMin = Math.log10(minValue);
+      const logMax = Math.log10(maxValue);
+      const y = (v) => margin.top + (1 - ((Math.log10(Math.max(v, minValue)) - logMin) / (logMax - logMin))) * plotH;
+
+      const dates = allPoints.map(point => parseDate(point.date));
+      const minD = new Date(Math.min(...dates.map(d => d.getTime()), parseDate("2023-03-01").getTime()));
+      const maxD = new Date(Math.max(...dates.map(d => d.getTime()), parseDate("2026-10-23").getTime()));
+      const x = (d) => margin.left + ((parseDate(d) - minD) / (maxD - minD)) * plotW;
+      const yearTicks = ["2023-01-01", "2024-01-01", "2025-01-01", "2026-01-01", "2027-01-01"].filter(d => parseDate(d) >= minD && parseDate(d) <= maxD);
+      yearTicks.forEach(d => {
+        const gx = x(d);
+        svg.insertAdjacentHTML("beforeend", `<line class="grid" x1="${gx}" x2="${gx}" y1="${margin.top}" y2="${margin.top + plotH}"></line><text x="${gx + 4}" y="${height - 16}" fill="#667085" font-size="11">${d.slice(0,4)}</text>`);
+      });
+
+      const ticks = [0.05, 0.1, 0.25, 0.5, 1, 2, 5, 8, 10, 15, 25, 30, 50, 75, 100, 150, 200].filter(t => t >= minValue && t <= maxValue);
+      ticks.forEach(t => {
+        const gy = y(t);
+        svg.insertAdjacentHTML("beforeend", `<line class="grid" x1="${margin.left}" x2="${margin.left + plotW}" y1="${gy}" y2="${gy}"></line><text x="${margin.left - 10}" y="${gy + 4}" text-anchor="end" fill="#667085" font-size="11">${money(t)}</text>`);
+      });
+      svg.insertAdjacentHTML("beforeend", `<line class="axis-line" x1="${margin.left}" x2="${margin.left + plotW}" y1="${margin.top + plotH}" y2="${margin.top + plotH}"></line><line class="axis-line" x1="${margin.left}" x2="${margin.left}" y1="${margin.top}" y2="${margin.top + plotH}"></line>`);
+
+      tracks.forEach((track, trackIndex) => {
+        const points = [...track.points].sort((a, b) => parseDate(a.date) - parseDate(b.date));
+        let d = "";
+        points.forEach((point, index) => {
+          const px = x(point.date);
+          const py = y(priceOf(point));
+          d += index === 0 ? `M ${px} ${py}` : ` L ${px} ${py}`;
+        });
+        svg.insertAdjacentHTML("beforeend", `<path class="tier-line" d="${d}" stroke="${track.color}"></path>`);
+        svg.insertAdjacentHTML("beforeend", `<text class="tier-label" x="${margin.left + 8}" y="${margin.top + 16 + trackIndex * 18}" fill="${track.color}">${track.name}</text>`);
+        points.forEach((point, index) => {
+          const cacheIndex = tierPointCache.push({ track, point }) - 1;
+          const px = x(point.date);
+          const py = y(priceOf(point));
+          const selected = state.selected === point.modelId;
+          svg.insertAdjacentHTML("beforeend", `<circle class="tier-point ${selected ? "selected" : ""}" data-index="${cacheIndex}" cx="${px}" cy="${py}" r="${selected ? 6 : 5}" fill="${track.color}"></circle>`);
+          if (point.showLabel) {
+            const labelY = index % 2 === 0 ? py - 11 : py + 19;
+            svg.insertAdjacentHTML("beforeend", `<text class="tier-label" x="${px + 8}" y="${labelY}">${point.short}</text>`);
+            svg.insertAdjacentHTML("beforeend", `<text class="tier-note" x="${px + 8}" y="${labelY + 13}">${money(priceOf(point))}</text>`);
+          }
+        });
+      });
+      bindTierPointEvents();
+    }
+
+    function bindTierPointEvents() {
+      const tooltip = $("#tooltip");
+      $$("#tierChart .tier-point").forEach(node => {
+        node.addEventListener("mouseenter", (ev) => {
+          const cached = tierPointCache[Number(node.dataset.index)];
+          const point = cached.point;
+          const source = sources[point.source];
+          tooltip.innerHTML = `
+            <b>${cached.track.name} · ${point.modelName}</b><br>
+            ${fmtDate(point.date)} · ${point.apiModelId}<br>
+            输入 ${money(point.input)}，输出 ${money(point.output)}<br>
+            <span class="muted">${point.note}</span><br>
+            <span class="muted">来源：${source ? source.label : point.source}</span>
+          `;
+          tooltip.classList.add("visible");
+          positionTooltip(ev, tooltip);
+        });
+        node.addEventListener("mousemove", (ev) => positionTooltip(ev, tooltip));
+        node.addEventListener("mouseleave", () => tooltip.classList.remove("visible"));
+        node.addEventListener("click", () => {
+          const cached = tierPointCache[Number(node.dataset.index)];
+          state.selected = cached.point.modelId;
+          render();
+        });
+      });
+    }
+
+    function renderDetails() {
+      const model = models.find(m => m.id === state.selected) || filteredModels()[0] || models[0];
+      state.selected = model.id;
+      const first = model.events[0];
+      const last = model.events[model.events.length - 1];
+      const inputDelta = ((last.input - first.input) / first.input) * 100;
+      const outputDelta = ((last.output - first.output) / first.output) * 100;
+      const rows = model.events.map(e => {
+        const src = sources[e.source];
+        return `
+          <tr>
+            <td>${fmtDate(e.date)}</td>
+            <td>${e.modelId}</td>
+            <td>${money(e.input)}</td>
+            <td>${money(e.output)}</td>
+            <td>${e.label}</td>
+            <td>${src ? `<a href="${src.url}" target="_blank" rel="noreferrer">${src.label}</a>` : e.source}</td>
+          </tr>
+        `;
+      }).join("");
+      const lifecycle = (model.lifecycle || []).map(e => {
+        const src = sources[e.source];
+        return `<p>${fmtDate(e.date)}：${e.label}${src ? `（<a href="${src.url}" target="_blank" rel="noreferrer">${src.label}</a>）` : ""}</p>`;
+      }).join("") || "<p>未查到官方退役节点；按统计日视作仍在。</p>";
+
+      $("#details").innerHTML = `
+        <div class="detail-grid">
+          <div>
+            <div class="detail-title">
+              <span class="dot" style="background:${modelColor(model)}"></span>
+              <h2>${model.name}</h2>
+              <span class="pill ${statusClass(model)}">${statusLabel(model)}</span>
+            </div>
+            <p class="detail-copy">${model.summary}</p>
+            <table>
+              <thead><tr><th>日期</th><th>模型 ID / 口径</th><th>输入</th><th>输出</th><th>节点说明</th><th>来源</th></tr></thead>
+              <tbody>${rows}</tbody>
+            </table>
+          </div>
+          <div class="mini-card">
+            <span>从首个节点到末次节点</span>
+            <b>${inputDelta === 0 ? "输入价不变" : inputDelta < 0 ? "输入价降 " + Math.abs(inputDelta).toFixed(0) + "%" : "输入价升 " + inputDelta.toFixed(0) + "%"}</b>
+            <b>${outputDelta === 0 ? "输出价不变" : outputDelta < 0 ? "输出价降 " + Math.abs(outputDelta).toFixed(0) + "%" : "输出价升 " + outputDelta.toFixed(0) + "%"}</b>
+            <div style="margin-top:10px;color:#667085">生命周期</div>
+            ${lifecycle}
+          </div>
+        </div>
+      `;
+    }
+
+    function renderSources() {
+      const used = new Set();
+      models.forEach(m => {
+        m.events.forEach(e => used.add(e.source));
+        (m.lifecycle || []).forEach(e => used.add(e.source));
+      });
+      $("#sources").innerHTML = Array.from(used).filter(key => sources[key]).map(key => {
+        const s = sources[key];
+        return `<p><a href="${s.url}" target="_blank" rel="noreferrer">${s.label}</a></p>`;
+      }).join("");
+    }
+
+    function render() {
+      const data = filteredModels();
+      if (!data.some(m => m.id === state.selected) && data[0]) state.selected = data[0].id;
+      updateControls();
+      renderList(data);
+      renderStats(data);
+      renderChart(data);
+      renderTierPanel();
+      renderDetails();
+      renderSources();
+    }
+
+    $$(".toolbar .group button").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const key = btn.closest(".group").dataset.control;
+        state[key] = btn.dataset.value;
+        render();
+      });
+    });
+
+    $("#search").addEventListener("input", (ev) => {
+      state.search = ev.target.value;
+      render();
+    });
+
+    $$("#tierControls button").forEach(btn => {
+      btn.addEventListener("click", () => {
+        state.tier = btn.dataset.value;
+        render();
+      });
+    });
+
+    window.addEventListener("resize", () => {
+      renderChart(filteredModels());
+      renderTierPanel();
+    });
+    render();
+  </script>
+</body>
+</html>
