@@ -59,6 +59,14 @@
       white-space: nowrap;
     }
 
+    .watermark {
+      margin: 10px 0 0;
+      color: #475467;
+      font-size: 13px;
+      line-height: 1.4;
+      font-weight: 600;
+    }
+
     .subtitle {
       margin: 14px 0 0;
       color: var(--muted);
@@ -661,6 +669,7 @@
     <header>
       <div>
         <h1><span class="title-line">OpenAI / Claude API</span><span class="title-line">模型定价历史</span></h1>
+        <p class="watermark">By owen, yux@chinaamc.com</p>
         <p class="subtitle">统计到 2026-06-11。只看官方一方 API 的标准文本输入、标准文本输出公开价，统一成美元 / 100 万 token；不把 Batch、缓存输入、Priority/Fast、区域加价、图像/音频/工具调用费混进主图。</p>
       </div>
       <div class="scope-card">
