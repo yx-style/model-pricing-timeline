@@ -88,6 +88,43 @@
 
     .scope-card strong { color: var(--ink); }
 
+    .audit-panel {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      margin: 0 0 14px;
+    }
+
+    .audit-item {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 13px;
+      box-shadow: var(--shadow);
+      min-height: 118px;
+    }
+
+    .audit-kicker {
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 700;
+      margin-bottom: 7px;
+    }
+
+    .audit-value {
+      font-size: 17px;
+      font-weight: 760;
+      line-height: 1.25;
+      margin-bottom: 7px;
+    }
+
+    .audit-item p {
+      margin: 0;
+      color: #475467;
+      font-size: 12px;
+      line-height: 1.55;
+    }
+
     .toolbar {
       background: var(--panel);
       border: 1px solid var(--line);
@@ -636,6 +673,7 @@
       }
 
       header,
+      .audit-panel,
       .main,
       .detail-grid,
       .toolbar,
@@ -670,12 +708,30 @@
       <div>
         <h1><span class="title-line">OpenAI / Claude API</span><span class="title-line">模型定价历史</span></h1>
         <p class="watermark">By owen, yux@chinaamc.com</p>
-        <p class="subtitle">统计到 2026-06-11。只看官方一方 API 的标准文本输入、标准文本输出公开价，统一成美元 / 100 万 token；不把 Batch、缓存输入、Priority/Fast、区域加价、图像/音频/工具调用费混进主图。</p>
+        <p class="subtitle">统计到 2026-06-12。只看官方一方 API 的标准文本输入、标准文本输出公开价，统一成美元 / 100 万 token；不把 Batch、缓存输入、Priority/Fast、区域加价、图像/音频/工具调用费混进主图。</p>
       </div>
       <div class="scope-card">
-        <strong>口径说明：</strong>这里只放官方发布稿、官方价格页、官方 API 文档能直接支持的价格节点。比如 GPT-4o 从 2024-05-13 snapshot 到 2024-08-06 snapshot 发生过官方降价；没有官方直接价格点的历史价不纳入主图。
+        <strong>口径说明：</strong>这里只放官方发布稿、官方价格页、官方 API 文档能直接支持的价格节点。图里区分同模型 / 同 snapshot 价格下调、同档位跨代换新、以及已经 deprecated 或 retired 的模型。
       </div>
     </header>
+
+    <section class="audit-panel" aria-label="核验摘要">
+      <div class="audit-item">
+        <div class="audit-kicker">当前状态</div>
+        <div class="audit-value">有一批模型已经退役或进入 Deprecated</div>
+        <p>OpenAI 的 GPT-3.5 Turbo、GPT-4、GPT-4 Turbo、GPT-4o、GPT-4.1 nano 在官方模型目录里已经标为 Deprecated；Claude 的 Opus 4 / 4.1、Sonnet 4 也在退役表里。</p>
+      </div>
+      <div class="audit-item">
+        <div class="audit-kicker">真正同模型降价</div>
+        <div class="audit-value">确认有，但数量不多</div>
+        <p>明确能用官方材料支撑的是 GPT-3.5 Turbo 多次降价、GPT-4o 新 snapshot 降价、Claude 3.5 Haiku 从 $1/$5 降到 $0.80/$4。</p>
+      </div>
+      <div class="audit-item">
+        <div class="audit-kicker">同档位趋势</div>
+        <div class="audit-value">旗舰价格长期下行后又分层回升</div>
+        <p>OpenAI 从 GPT-4 到 4o / 4.1 明显变便宜，GPT-5.5 重新上探到 $2.50/$15；Claude Opus 从 4.5 开始从 $15/$75 降到 $5/$25。</p>
+      </div>
+    </section>
 
     <section class="toolbar" aria-label="筛选控件">
       <div class="group" data-control="provider">
@@ -765,6 +821,7 @@
       openaiGpt54: { label: "OpenAI: Introducing GPT-5.4", url: "https://openai.com/index/introducing-gpt-5-4/" },
       openaiGpt55: { label: "OpenAI: Introducing GPT-5.5", url: "https://openai.com/index/introducing-gpt-5-5/" },
       openaiModelsAll: { label: "OpenAI API Docs: All models", url: "https://developers.openai.com/api/docs/models/all" },
+      openaiModel4o: { label: "OpenAI API Docs: GPT-4o model", url: "https://developers.openai.com/api/docs/models/gpt-4o" },
       openaiPricing: { label: "OpenAI API pricing", url: "https://developers.openai.com/api/docs/pricing" },
       openaiDeprecations: { label: "OpenAI API deprecations", url: "https://developers.openai.com/api/docs/deprecations" },
       anthropicMay2023: { label: "Anthropic CDN: Model pricing PDF, May 2023", url: "https://www-cdn.anthropic.com/b0d46f8c8e2f4cca2833c17cb68435035c0bb5a9/apr-pricing-tokens_2023-05-10-213025_tnty.pdf" },
@@ -857,16 +914,16 @@
         family: "GPT-4o",
         name: "GPT-4o",
         status: "deprecated",
-        summary: "2024-05-13 上线时已经比 GPT-4 Turbo 便宜 50%；2024-08-06 新 snapshot 再降到 $2.5/M 输入、$10/M 输出。官方当前模型目录已把 base GPT-4o 标为 Deprecated，但退役页未列出 base gpt-4o 的明确 shutdown date。",
+        summary: "2024-05-13 上线时已经比 GPT-4 Turbo 便宜 50%；2024-08-06 新 snapshot 再降到 $2.5/M 输入、$10/M 输出。官方模型页仍列出 gpt-4o 价格和可用端点，但 All models 目录已把 GPT-4o 标为 Deprecated；退役页只明确列出 2024-05-13 旧 snapshot 的关闭日。",
         events: [
           { date: "2024-05-13", input: 5.00, output: 15.00, modelId: "gpt-4o-2024-05-13", label: "GPT-4o 上线，约为 GPT-4 Turbo 半价", source: "openai4o" },
           { date: "2024-08-06", input: 2.50, output: 10.00, modelId: "gpt-4o-2024-08-06", label: "新 snapshot：输入省 50%，输出省 33%", source: "openaiStructured" },
-          { date: "2024-11-20", input: 2.50, output: 10.00, modelId: "gpt-4o-2024-11-20", label: "后续 snapshot，价格不变", source: "openaiPricing" }
+          { date: "2024-11-20", input: 2.50, output: 10.00, modelId: "gpt-4o-2024-11-20", label: "后续 snapshot，价格不变", source: "openaiModel4o" }
         ],
         lifecycle: [
-          { date: "2026-06-12", label: "官方模型目录当前标为 Deprecated；base gpt-4o 未在退役页看到明确 shutdown date", source: "openaiModelsAll", type: "note" },
-          { date: "2026-02-13", label: "ChatGPT 中退役；API 当时不变", source: "openaiDeprecations", type: "note" },
-          { date: "2026-10-23", label: "2024-05-13 旧 snapshot 计划关闭", source: "openaiDeprecations", type: "retire" }
+          { date: "2026-06-12", label: "模型页仍列出 gpt-4o 价格；All models 目录标为 Deprecated", source: "openaiModelsAll", type: "note" },
+          { date: "2026-02-17", label: "chatgpt-4o-latest snapshot 已关闭，API base gpt-4o 不按此条关闭", source: "openaiDeprecations", type: "note" },
+          { date: "2026-10-23", label: "gpt-4o-2024-05-13 旧 snapshot 计划关闭；base gpt-4o 未列明确 shutdown date", source: "openaiDeprecations", type: "note" }
         ]
       },
       {
@@ -979,12 +1036,12 @@
         family: "GPT-5",
         name: "GPT-5.2",
         status: "active",
-        summary: "GPT-5.2 比 GPT-5 / GPT-5.1 更贵，官方解释是能力提升和 token 效率提升。",
+        summary: "GPT-5.2 当前在官方模型目录里属于 previous frontier model；gpt-5.2-chat-latest 这个 Chat 变体计划 2026-08-10 关闭，不代表 base GPT-5.2 已退役。",
         events: [
           { date: "2025-12-11", input: 1.75, output: 14.00, modelId: "gpt-5.2 / gpt-5.2-chat-latest", label: "上线价格", source: "openaiGpt52" }
         ],
         lifecycle: [
-          { date: "2026-08-10", label: "gpt-5.2-chat-latest 计划关闭", source: "openaiDeprecations", type: "retire" }
+          { date: "2026-08-10", label: "gpt-5.2-chat-latest 计划关闭，base GPT-5.2 未按此条关闭", source: "openaiDeprecations", type: "note" }
         ]
       },
       {
@@ -993,9 +1050,9 @@
         family: "GPT-5",
         name: "GPT-5.4",
         status: "active",
-        summary: "GPT-5.4 2026-03-05 上线，标准短上下文价 $2.50/M 输入、$15/M 输出；长上下文另有更高价格。",
+        summary: "GPT-5.4 当前标准短上下文价 $1.25/M 输入、$7.50/M 输出；长上下文和 Priority 另有更高价格。",
         events: [
-          { date: "2026-03-05", input: 2.50, output: 15.00, modelId: "gpt-5.4", label: "上线价格", source: "openaiGpt54" }
+          { date: "2026-03-05", input: 1.25, output: 7.50, modelId: "gpt-5.4", label: "标准短上下文价", source: "openaiPricing" }
         ],
         lifecycle: []
       },
@@ -1005,9 +1062,9 @@
         family: "GPT-5",
         name: "GPT-5.4 mini",
         status: "active",
-        summary: "GPT-5.4 mini 当前标准价格 $0.75/M 输入、$4.50/M 输出。",
+        summary: "GPT-5.4 mini 当前标准短上下文价 $0.375/M 输入、$2.25/M 输出。",
         events: [
-          { date: "2026-03-05", input: 0.75, output: 4.50, modelId: "gpt-5.4-mini", label: "上线价格", source: "openaiPricing" }
+          { date: "2026-03-05", input: 0.375, output: 2.25, modelId: "gpt-5.4-mini", label: "标准短上下文价", source: "openaiPricing" }
         ],
         lifecycle: []
       },
@@ -1017,9 +1074,9 @@
         family: "GPT-5",
         name: "GPT-5.5",
         status: "active",
-        summary: "GPT-5.5 2026-04-23 发布，2026-04-24 API 可用。当前标准短上下文价 $5/M 输入、$30/M 输出。",
+        summary: "GPT-5.5 是当前 frontier model。官方价格页当前标准短上下文价为 $2.50/M 输入、$15/M 输出；长上下文价为 $5/M 输入、$22.50/M 输出。",
         events: [
-          { date: "2026-04-24", input: 5.00, output: 30.00, modelId: "gpt-5.5", label: "API 可用后的标准价格", source: "openaiGpt55" }
+          { date: "2026-04-24", input: 2.50, output: 15.00, modelId: "gpt-5.5", label: "标准短上下文价", source: "openaiPricing" }
         ],
         lifecycle: []
       },
@@ -1029,9 +1086,9 @@
         family: "GPT-5",
         name: "GPT-5.5 Pro",
         status: "active",
-        summary: "GPT-5.5 的高精度版本，当前 API 标准短上下文价 $30/M 输入、$180/M 输出。",
+        summary: "GPT-5.5 的高精度版本，当前 API 标准短上下文价 $15/M 输入、$90/M 输出。",
         events: [
-          { date: "2026-04-24", input: 30.00, output: 180.00, modelId: "gpt-5.5-pro", label: "API 可用后的标准价格", source: "openaiGpt55" }
+          { date: "2026-04-24", input: 15.00, output: 90.00, modelId: "gpt-5.5-pro", label: "标准短上下文价", source: "openaiPricing" }
         ],
         lifecycle: []
       },
@@ -1368,7 +1425,7 @@
     function statusLabel(model) {
       if (model.status === "active") return "仍在";
       if (model.status === "retired") return "已退役";
-      return "将退役";
+      return "已 deprecated";
     }
 
     function statusClass(model) {
@@ -1424,7 +1481,7 @@
           name: "OpenAI 主力旗舰线",
           shortName: "OpenAI 主力",
           color: "#2563eb",
-          note: "GPT-4 到 GPT-4.1 下行；GPT-5 后再向上分层。",
+          note: "GPT-4 到 GPT-4.1 下行；GPT-5 后按能力、上下文和服务档位分层。",
           points: [
             pointFromModel("gpt-4", 0, "GPT-4", "早期旗舰基准"),
             pointFromModel("gpt-4-turbo", 0, "GPT-4 Turbo", "128K 旗舰降价"),
@@ -1432,9 +1489,9 @@
             pointFromModel("gpt-4o", 1, "4o 08-06", "同代 snapshot 再降价"),
             pointFromModel("gpt-4-1", 0, "GPT-4.1", "GPT-4 时代低点"),
             pointFromModel("gpt-5", 0, "GPT-5", "新一代主模型，输出价回到 $10/M"),
-            pointFromModel("gpt-5-2", 0, "GPT-5.2", "GPT-5 系列开始向上分层", false),
-            pointFromModel("gpt-5-4", 0, "GPT-5.4", "更高能力档位", false),
-            pointFromModel("gpt-5-5", 0, "GPT-5.5", "当前主旗舰价位")
+            pointFromModel("gpt-5-2", 0, "GPT-5.2", "上一代 frontier 价位", false),
+            pointFromModel("gpt-5-4", 0, "GPT-5.4", "标准短上下文价更低", false),
+            pointFromModel("gpt-5-5", 0, "GPT-5.5", "当前主旗舰标准短上下文价")
           ]
         },
         {
@@ -1484,8 +1541,8 @@
             pointFromModel("gpt-4o", 1, "4o 08-06", "同代 snapshot 再降价"),
             pointFromModel("gpt-4-1", 0, "GPT-4.1", "GPT-4 时代低点"),
             pointFromModel("gpt-5", 0, "GPT-5", "新一代主模型"),
-            pointFromModel("gpt-5-2", 0, "GPT-5.2", "GPT-5 系列上移", false),
-            pointFromModel("gpt-5-4", 0, "GPT-5.4", "更高能力档位", false),
+            pointFromModel("gpt-5-2", 0, "GPT-5.2", "上一代 frontier 价位", false),
+            pointFromModel("gpt-5-4", 0, "GPT-5.4", "标准短上下文价更低", false),
             pointFromModel("gpt-5-5", 0, "GPT-5.5", "当前主旗舰")
           ]
         },
@@ -1612,7 +1669,7 @@
         $("#chartNote").textContent = "横线从首个价格节点延伸到退役日或统计日；红色短线代表退役或计划退役节点。";
       } else {
         $("#chartTitle").textContent = `${metricName()}头部模型趋势`;
-        $("#chartNote").textContent = "这是跨代高端线视角：Claude 3.7 属于 Sonnet 线，未归入 Opus 线；长期看 token 单价明显下行，但 2026 年以后高端档也出现回升和分层。";
+        $("#chartNote").textContent = "这是跨代高端线视角：Claude 3.7 属于 Sonnet 线，未归入 Opus 线；长期看 token 单价明显下行，但 2026 年以后高端档开始按能力、上下文和服务档位分层。";
       }
 
       const svg = $("#chart");
