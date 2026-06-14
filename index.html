@@ -729,7 +729,7 @@
       <div class="audit-item">
         <div class="audit-kicker">同档位趋势</div>
         <div class="audit-value">旗舰价格长期下行后又分层回升</div>
-        <p>OpenAI 从 GPT-4 到 4o / 4.1 明显变便宜，GPT-5.5 重新上探到 $2.50/$15；Claude Opus 从 4.5 开始从 $15/$75 降到 $5/$25。</p>
+        <p>OpenAI 从 GPT-4 到 4o / 4.1 明显变便宜，GPT-5.5 Standard 重新上探到 $5/$30；Claude Opus 从 4.5 开始从 $15/$75 降到 $5/$25。</p>
       </div>
     </section>
 
@@ -1050,9 +1050,9 @@
         family: "GPT-5",
         name: "GPT-5.4",
         status: "active",
-        summary: "GPT-5.4 当前标准短上下文价 $1.25/M 输入、$7.50/M 输出；长上下文和 Priority 另有更高价格。",
+        summary: "GPT-5.4 当前 Standard 短上下文价 $2.50/M 输入、$15/M 输出；Batch / Flex 是 $1.25/M 输入、$7.50/M 输出，长上下文和 Priority 另有更高价格。",
         events: [
-          { date: "2026-03-05", input: 1.25, output: 7.50, modelId: "gpt-5.4", label: "标准短上下文价", source: "openaiPricing" }
+          { date: "2026-03-05", input: 2.50, output: 15.00, modelId: "gpt-5.4", label: "Standard 短上下文价", source: "openaiPricing" }
         ],
         lifecycle: []
       },
@@ -1062,9 +1062,9 @@
         family: "GPT-5",
         name: "GPT-5.4 mini",
         status: "active",
-        summary: "GPT-5.4 mini 当前标准短上下文价 $0.375/M 输入、$2.25/M 输出。",
+        summary: "GPT-5.4 mini 当前 Standard 短上下文价 $0.75/M 输入、$4.50/M 输出；Batch / Flex 是 $0.375/M 输入、$2.25/M 输出。",
         events: [
-          { date: "2026-03-05", input: 0.375, output: 2.25, modelId: "gpt-5.4-mini", label: "标准短上下文价", source: "openaiPricing" }
+          { date: "2026-03-05", input: 0.75, output: 4.50, modelId: "gpt-5.4-mini", label: "Standard 短上下文价", source: "openaiPricing" }
         ],
         lifecycle: []
       },
@@ -1074,9 +1074,9 @@
         family: "GPT-5",
         name: "GPT-5.5",
         status: "active",
-        summary: "GPT-5.5 是当前 frontier model。官方价格页当前标准短上下文价为 $2.50/M 输入、$15/M 输出；长上下文价为 $5/M 输入、$22.50/M 输出。",
+        summary: "GPT-5.5 是当前 frontier model。官方价格页当前 Standard 短上下文价为 $5/M 输入、$30/M 输出；长上下文价为 $10/M 输入、$45/M 输出。Batch / Flex 短上下文价是 $2.50/M 输入、$15/M 输出。",
         events: [
-          { date: "2026-04-24", input: 2.50, output: 15.00, modelId: "gpt-5.5", label: "标准短上下文价", source: "openaiPricing" }
+          { date: "2026-04-24", input: 5.00, output: 30.00, modelId: "gpt-5.5", label: "Standard 短上下文价", source: "openaiPricing" }
         ],
         lifecycle: []
       },
@@ -1086,9 +1086,9 @@
         family: "GPT-5",
         name: "GPT-5.5 Pro",
         status: "active",
-        summary: "GPT-5.5 的高精度版本，当前 API 标准短上下文价 $15/M 输入、$90/M 输出。",
+        summary: "GPT-5.5 的高精度版本，当前 Standard 短上下文价 $30/M 输入、$180/M 输出；Batch / Flex 是 $15/M 输入、$90/M 输出。",
         events: [
-          { date: "2026-04-24", input: 15.00, output: 90.00, modelId: "gpt-5.5-pro", label: "标准短上下文价", source: "openaiPricing" }
+          { date: "2026-04-24", input: 30.00, output: 180.00, modelId: "gpt-5.5-pro", label: "Standard 短上下文价", source: "openaiPricing" }
         ],
         lifecycle: []
       },
@@ -1490,8 +1490,8 @@
             pointFromModel("gpt-4-1", 0, "GPT-4.1", "GPT-4 时代低点"),
             pointFromModel("gpt-5", 0, "GPT-5", "新一代主模型，输出价回到 $10/M"),
             pointFromModel("gpt-5-2", 0, "GPT-5.2", "上一代 frontier 价位", false),
-            pointFromModel("gpt-5-4", 0, "GPT-5.4", "标准短上下文价更低", false),
-            pointFromModel("gpt-5-5", 0, "GPT-5.5", "当前主旗舰标准短上下文价")
+            pointFromModel("gpt-5-4", 0, "GPT-5.4", "Standard 短上下文价上探", false),
+            pointFromModel("gpt-5-5", 0, "GPT-5.5", "当前主旗舰 Standard 价")
           ]
         },
         {
@@ -1542,7 +1542,7 @@
             pointFromModel("gpt-4-1", 0, "GPT-4.1", "GPT-4 时代低点"),
             pointFromModel("gpt-5", 0, "GPT-5", "新一代主模型"),
             pointFromModel("gpt-5-2", 0, "GPT-5.2", "上一代 frontier 价位", false),
-            pointFromModel("gpt-5-4", 0, "GPT-5.4", "标准短上下文价更低", false),
+            pointFromModel("gpt-5-4", 0, "GPT-5.4", "Standard 短上下文价上探", false),
             pointFromModel("gpt-5-5", 0, "GPT-5.5", "当前主旗舰")
           ]
         },
